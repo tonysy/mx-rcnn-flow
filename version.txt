@@ -1,0 +1,27 @@
+Required python packages: cython, cv2, easydict, matplotlib, numpy.
+
+Changes for 0.9.9:
+    Initial version for three categories
+Changes for 1.0.0:
+    0.9.9 cannot use preprocess while 1.0.0 supports preprocess of image
+Changes for 1.0.1:
+    New network architecture with smaller model size
+    Package name has been changed to `rcnn` while pipeline still accessible by `rcnn.pipe.Pipeline`
+Changes for 1.0.2:
+    Go back to old network architecture in 1.0.0
+    Time consuming python operation is replaced by CXX. Update MXNet to at least Commit 2a8275a CXX Proposal Op
+Changes for 1.0.3:
+    Add requirements
+Changes for 1.0.4:
+    configparser 3.5.0
+Changes for 1.0.5:
+    fix pipe preprocess
+Changes for 1.0.6:
+    Change weighted nms to high and low threshold
+Changes for 1.0.7:
+    Change weighted nms lo to 0.3
+
+Changes for 1.1.0:
+    review rcnn/pipe.py for documentation usage.
+Changes for 1.1.1:
+    acclerate 1.1.0 to 20ms

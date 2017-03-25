@@ -1,0 +1,24 @@
+vgg train:
+python train_end2end.py --dataset Kitti --gpu 0
+vgg test:
+python test.py --dataset Kitti --gpu 0 --vis --thresh 0.7
+
+pva train:
+python train_end2end.py --network pva --dataset Kitti --gpu 0
+pva test:
+python test.py --network pva --dataset Kitti --gpu 0 --vis --thresh 0.7
+
+enet train:
+python train_end2end.py --network enet --dataset Kitti --gpu 0
+enet test:
+python test.py --network enet --dataset Kitti --gpu 0 --vis --thresh 0.7
+
+resnet train:
+python train_end2end.py --network resnet --dataset Kitti --gpu 0
+resnet test:
+python test.py --network resnet --dataset Kitti --gpu 0 --vis --thresh 0.7
+
+custom train:
+python train_end2end.py --dataset Custom --image_set train1+train2+train3 --gpu 0
+custom test:
+python test.py --dataset Custom --image_set test0922 --gpu 0 --vis --thresh 0.7
