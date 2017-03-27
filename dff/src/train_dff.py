@@ -52,7 +52,7 @@ def train_net(args, ctx, pretrained, \
 
     # setup mutli-gpu
     batch_size = len(ctx)
-    input_batch_size = config.TRAIN.BATCH_IMAGES * batch_size
+    input_batch_size = dff_config.TRAIN.BATCH_IMAGES * batch_size
 
     # pprint config
     pprint.pprint(config)
