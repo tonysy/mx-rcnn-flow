@@ -63,7 +63,7 @@ dff_config.TRAIN.BBOX_STDS                      = (0.1, 0.1, 0.2, 0.2)
 
 # flownet
 dff_config.TRAIN.FLOW_PRETRAINED                = './model/flow_model/flow'
-
+dff_config.TRAIN.FLOW_INPUT_FACTOR              = 0.00390625
 dff_config.TEST = edict()
 
 # R-CNN testing
