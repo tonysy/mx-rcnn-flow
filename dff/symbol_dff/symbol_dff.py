@@ -98,11 +98,14 @@ def get_vgg_train_flow(num_classes=dff_config.NUM_CLASSES,\
             rpn_min_size=dff_config.TRAIN.RPN_MIN_SIZE)
     else:
         rois=mx.symbol.Custom(
-            cls_prob=rpn_cls_act_reshape, bbox_pred=rpn_bbox_pred, im_info=im_info, name='rois',
-            op_type='proposal', feat_stride=dff_config.RPN_FEAT_STRIDE,
-            scales=tuple(dff_config.ANCHOR_SCALES), ratios=tuple(dff_config.ANCHOR_RATIOS),
+            cls_prob=rpn_cls_act_reshape, bbox_pred=rpn_bbox_pred, \
+            im_info=im_info, name='rois', op_type='proposal', \
+            feat_stride=dff_config.RPN_FEAT_STRIDE,
+            scales=tuple(dff_config.ANCHOR_SCALES), \
+            ratios=tuple(dff_config.ANCHOR_RATIOS),
             rpn_pre_nms_top_n=dff_config.TRAIN.RPN_PRE_NMS_TOP_N, rpn_post_nms_top_n=dff_config.TRAIN.RPN_POST_NMS_TOP_N,
-            threshold=dff_config.TRAIN.RPN_NMS_THRESH, rpn_min_size=dff_config.TRAIN.RPN_MIN_SIZE)
+            threshold=dff_config.TRAIN.RPN_NMS_THRESH, \
+            rpn_min_size=dff_config.TRAIN.RPN_MIN_SIZE)
 
     # ROI proposal target
     gt_boxes_reshape = mx.symbol.Reshape(data=gt_boxes, shape=(-1,5),

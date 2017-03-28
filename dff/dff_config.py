@@ -4,7 +4,9 @@ from easydict import EasyDict as edict
 dff_config = edict()
 
 dff_config.EPS                                  = 1e-14
-dff_config.PIXEL_MEANS                          = np.array([[[123.68, 116.779, 103.939]]])
+# dff_config.PIXEL_MEANS                          = np.array([[[123.68, 116.779, 103.939]]])
+dff_config.PIXEL_MEANS                          = np.array([103.939, 116.779, 123.68])
+
 
 dff_config.SCALES                               = [(376, 1242)]
 dff_config.IMAGE_STRIDE                         = 64
@@ -64,6 +66,12 @@ dff_config.TRAIN.BBOX_STDS                      = (0.1, 0.1, 0.2, 0.2)
 # flownet
 dff_config.TRAIN.FLOW_PRETRAINED                = './model/flow_model/flow'
 dff_config.TRAIN.FLOW_INPUT_FACTOR              = 0.00390625
+
+# dataset
+dff_config.TRAIN.RAND_FILE                      = '/home/zhicheng/Projects/featureflow/devkit_object/mapping/train_rand.txt'
+dff_config.TRAIN.MAP_FILE                       = '/home/zhicheng/Projects/featureflow/devkit_object/mapping/train_mapping.txt'
+dff_config.TRAIN.RAW_DATA                       = '/data/zhicheng/kitti_rawdata'
+
 dff_config.TEST = edict()
 
 # R-CNN testing
