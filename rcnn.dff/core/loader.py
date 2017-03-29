@@ -3,15 +3,10 @@ import numpy as np
 from mxnet.executor_manager import _split_input_slice
 
 from rcnn.config import config
-# from rcnn.io.image import tensor_vstack
-# from rcnn.io.rpn import get_rpn_testbatch, get_rpn_batch, assign_anchor
-# from rcnn.io.rcnn import get_rcnn_testbatch, get_rcnn_batch
+from rcnn.io.image import tensor_vstack
+from rcnn.io.rpn import get_rpn_testbatch, get_rpn_batch, assign_anchor
+from rcnn.io.rcnn import get_rcnn_testbatch, get_rcnn_batch
 
-from dff.io_dff.image_dff import tensor_vstack
-from dff.io_dff.rpn_dff import get_rpn_testbatch, get_rpn_batch, assign_anchor
-from dff.io_dff.rcnn_dff import get_rcnn_testbatch, get_rcnn_batch
-
-from dff.dff_config import dff_config
 
 class TestLoader(mx.io.DataIter):
     def __init__(self, roidb, batch_size=1, shuffle=False,
@@ -30,7 +25,7 @@ class TestLoader(mx.io.DataIter):
 
         # decide data and label names (only for training)
         if has_rpn:
-            self.data_name = ['data','data2', 'im_info']
+            self.data_name = ['data', 'im_info']
         else:
             self.data_name = ['data', 'rois']
         self.label_name = None
@@ -91,6 +86,7 @@ class TestLoader(mx.io.DataIter):
             data, label, im_info = get_rcnn_testbatch(roidb)
         self.data = [mx.nd.array(data[name]) for name in self.data_name]
         self.im_info = im_info
+
 
 class ROIIter(mx.io.DataIter):
     def __init__(self, roidb, batch_size=2, shuffle=False, ctx=None, work_load_list=None, aspect_grouping=False):
@@ -218,6 +214,7 @@ class ROIIter(mx.io.DataIter):
         self.data = [mx.nd.array(all_data[name]) for name in self.data_name]
         self.label = [mx.nd.array(all_label[name]) for name in self.label_name]
 
+
 class AnchorLoader(mx.io.DataIter):
     def __init__(self, feat_sym, roidb, batch_size=1, shuffle=False, ctx=None, work_load_list=None,
                  feat_stride=16, anchor_scales=(8, 16, 32), anchor_ratios=(0.5, 1, 2), allowed_border=0,
@@ -256,7 +253,7 @@ class AnchorLoader(mx.io.DataIter):
 
         # decide data and label names
         if config.TRAIN.END2END:
-            self.data_name = ['data', 'data2', 'im_info', 'gt_boxes']
+            self.data_name = ['data', 'im_info', 'gt_boxes']
         else:
             self.data_name = ['data']
         self.label_name = ['label', 'bbox_target', 'bbox_weight']
@@ -297,6 +294,7 @@ class AnchorLoader(mx.io.DataIter):
                 self.index = inds
             else:
                 np.random.shuffle(self.index)
+
     def iter_next(self):
         return self.cur + self.batch_size <= self.size
 
@@ -320,7 +318,7 @@ class AnchorLoader(mx.io.DataIter):
             return 0
 
     def infer_shape(self, max_data_shape=None, max_label_shape=None):
-        """ Return maximum data and label shape for single GPU """
+        """ Return maximum data and label shape for single gpu """
         if max_data_shape is None:
             max_data_shape = []
         if max_label_shape is None:
@@ -334,6 +332,7 @@ class AnchorLoader(mx.io.DataIter):
         label = [label[k] for k in self.label_name]
         label_shape = [(k, tuple([input_batch_size] + list(v.shape[1:]))) for k, v in zip(self.label_name, label)]
         return max_data_shape, label_shape
+
     def get_batch(self):
         # slice roidb
         cur_from = self.cur
@@ -362,11 +361,6 @@ class AnchorLoader(mx.io.DataIter):
         data_tensor = tensor_vstack([batch['data'] for batch in data_list])
         for data, data_pad in zip(data_list, data_tensor):
             data['data'] = data_pad[np.newaxis, :]
-
-        data2_tensor = tensor_vstack([batch['data2'] for batch in data_list])
-        for data, data_pad in zip(data_list, data2_tensor):
-            data['data2'] = data_pad[np.newaxis, :]
-
 
         new_label_list = []
         for data, label in zip(data_list, label_list):

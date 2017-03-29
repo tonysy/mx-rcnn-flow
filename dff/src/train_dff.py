@@ -1,4 +1,5 @@
 import sys
+sys.path.insert(0,'/usr/local/lib/python2.7/dist-packages')
 import logging
 import argparse
 import pprint
@@ -10,7 +11,7 @@ import numpy as np
 
 from dff.dff_config import dff_config
 from dff.core_dff.loader_dff import AnchorLoader # modified for dff
-
+from dff.symbol_dff.symbol_dff import *
 from rcnn.utils.load_data import load_gt_roidb, merge_roidb, filter_roidb
 
 def train_net(args, ctx, pretrained, \
@@ -29,7 +30,6 @@ def train_net(args, ctx, pretrained, \
                         filename=os.path.join(log_path, d + '_epoch'+ str(end_epoch)+'.log'),
                         filemode='w')
 
-    #定义一个StreamHandler，将INFO级别或更高的日志信息打印到标准错误，并将其添加到当前的日志处理对象#
     console = logging.StreamHandler()
     console.setLevel(logging.INFO)
     formatter = logging.Formatter('%(name)-12s: %(levelname)-8s %(message)s')
@@ -47,7 +47,7 @@ def train_net(args, ctx, pretrained, \
     dff_config.TRAIN.BG_THRESH_LO                   = 0.0
 
     # load symbol
-    sym = eval('get_' + args.network + '_train')()
+    sym = eval('get_' + args.network + '_train_flow')()
     feat_sym = sym.get_internals()['rpn_cls_score_output']
 
     # setup mutli-gpu
@@ -58,9 +58,9 @@ def train_net(args, ctx, pretrained, \
     pprint.pprint(config)
 
     # load dataset and prepare imdb for training
-    image_sets = [iset for iset in image_set.split('+')]
-    roidbs = [load_gt_roidb(dataset, image_set, root_path, dataset_path,
-                            flip=not no_flip)
+    image_sets = [iset for iset in args.image_set.split('+')]
+    roidbs = [load_gt_roidb(args.dataset, image_set, args.root_path, args.dataset_path,
+                            flip=not args.no_flip)
               for image_set in image_sets]
     roidb = merge_roidb(roidbs)
     roidb = filter_roidb(roidb)
@@ -192,18 +192,19 @@ def parse_args():
                         default='device', type=str)
     parser.add_argument('--work_load_list', help='work load for different devices', \
                         default=None, type=list)
-    parser.add_argument('--flip', help='flip images', \
-                        action='store_true', default=True)
+    parser.add_argument('--no_flip', help='disable flip images', action='store_true')
+    # parser.add_argument('--flip', help='flip images', \
+    #                     action='store_true', default=True)
     parser.add_argument('--resume', help='continue training', \
                         action='store_true')
     parser.add_argument('--gpus', help='GPU device to train with', \
                         default='1', type=str)
     parser.add_argument('--pretrained',help='pretrained model prefix', \
                         default=os.path.join('model', 'vgg16-e2e'), type=str)
-    parser.add_argument('--epoch_pretrained', help='epoch of pretrained model', \
-                        default=10, int=10)
+    parser.add_argument('--pretrained_epoch', help='epoch of pretrained model', \
+                        default=10, type=int)
     parser.add_argument('--prefix', help='new model prefix', \
-                        default=os.path.join('model','dff_orginal'), tupe=str)
+                        default=os.path.join('model','dff_orginal'), type=str)
     parser.add_argument('--begin_epoch', help='begin epoch of training', \
                         default=0, type=int)
     parser.add_argument('--end_epoch', help='end epoch of training', \
@@ -217,7 +218,10 @@ def parse_args():
 
     return args
 
-if __name__ = '__main__':
+if __name__ == '__main__':
     args = parse_args()
     ctx = []
-    train_net()
+    train_net(args, ctx, args.pretrained, \
+                  args.pretrained_epoch, args.prefix,         \
+                  args.begin_epoch, args.end_epoch,\
+                  lr=args.lr, lr_step=args.lr_step)
