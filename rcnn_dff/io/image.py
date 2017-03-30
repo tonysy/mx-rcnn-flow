@@ -6,6 +6,27 @@ import random
 from ..config import config
 
 
+def get_twin_path(roi_rec, rand_map, img_map):
+    """
+    get twin pic of the training image
+    only for kitti datanow!!!!
+    """
+    img_name = os.path.basename(roi_rec['image'])
+    img_num = int(os.path.splitext(img_name)[0])
+    rand_idx = int(rand_map[img_num])
+    img_info = img_map[rand_idx - 1]
+
+    curr = int(img_info[2])
+    # prev = curr - 1 if curr > 0 else curr
+    diff = npr.randint(2)
+    post = curr + 1
+    img_info[2] = str(post).zfill(10)
+
+    rawdata_dir = '/data/zhicheng/kitti_rawdata'
+    img_path = os.path.join(rawdata_dir, img_info[0], img_info[1], 'image_02', 'data', img_info[2] + '.png')
+    # print img_path
+    return img_path
+
 def get_image(roidb, crop='origin'):
     """
     preprocess image and return processed roidb
@@ -19,7 +40,27 @@ def get_image(roidb, crop='origin'):
     """
     num_images = len(roidb)
     processed_ims = []
+    processed_im2 = []
     processed_roidb = []
+
+    rand_file = '/home/zhicheng/Projects/featureflow/devkit_object/mapping/train_rand.txt'
+    map_file = '/home/zhicheng/Projects/featureflow/devkit_object/mapping/train_mapping.txt'
+
+    rand_map = []
+    with open(rand_file) as f:
+        for line in f:
+            rand_map = line.strip().split(',')
+    # print rand_map
+    # print " "
+    # import time
+    # time.sleep(2)
+    img_map = []
+    with open(map_file) as f:
+        for line in f:
+            line_list = line.strip().split(' ')
+            img_map.append(line_list)
+
+
     for i in range(num_images):
         roi_rec = roidb[i]
         assert os.path.exists(roi_rec['image']), '%s does not exist'.format(roi_rec['image'])
@@ -195,6 +236,20 @@ def get_image(roidb, crop='origin'):
             im, im_scale = resize(im, target_size, max_size, stride=config.IMAGE_STRIDE)
             im_tensor = transform(im, config.PIXEL_MEANS)
             processed_ims.append(im_tensor)
+
+            twin_path = get_twin_path(roi_rec, rand_map, img_map)
+
+            if not os.path.exists(twin_path):
+                processed_im2.append(im_tensor)
+                print "twin pic {} does not exist\n".format(twin_path)
+            else:
+                im2 = cv2.imread(twin_path)
+                if roidb[i]['flipped']:
+                    im2 = im2[:, ::-1, :]
+                im2, _ = image_processing.resize(im2, target_size, max_size, stride=config.IMAGE_STRIDE)
+                im2_tensor = image_processing.transform(im2, config.PIXEL_MEANS)
+                processed_im2.append(im2_tensor)
+
             im_info = [im_tensor.shape[2], im_tensor.shape[3], im_scale]
             new_rec['boxes'] = roi_rec['boxes'].copy() * im_scale
             new_rec['im_info'] = im_info
@@ -204,7 +259,7 @@ def get_image(roidb, crop='origin'):
                     bbox_targets[:, 1:] *= im_scale
                     new_rec['bbox_targets'] = bbox_targets
             processed_roidb.append(new_rec)
-    return processed_ims, processed_roidb
+    return processed_ims,processed_im2, processed_roidb
 
 
 def resize(im, target_size, max_size, stride=0):

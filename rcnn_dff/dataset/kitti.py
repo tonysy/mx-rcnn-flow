@@ -67,9 +67,10 @@ class Kitti(IMDB):
             print '{} gt roidb loaded from {}'.format(self.name, cache_file)
             return roidb
         gt_roidb = self.load_kitti_annotations()
+        print "========gt_roidb"
         with open(cache_file, 'wb') as f:
             cPickle.dump(gt_roidb, f, cPickle.HIGHEST_PROTOCOL)
-
+        # print "========gt_roidb"
         return gt_roidb
 
     def load_kitti_annotations(self):
@@ -99,7 +100,9 @@ class Kitti(IMDB):
         for im in range(self.num_images):
             roi_rec = dict()
             roi_rec['image'] = self.image_path_at(im)
+            print roi_rec['image']
             size = cv2.imread(roi_rec['image']).shape
+            print size
             roi_rec['height'] = size[0]
             roi_rec['width'] = size[1]
             box_list = total_box_list[im]
@@ -196,4 +199,3 @@ class Kitti(IMDB):
             if not os.path.exists(filename):
                 print 'creating', filename
                 open(filename, 'a').close()
-

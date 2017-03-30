@@ -30,11 +30,13 @@ def get_rpn_testbatch(roidb):
     :return: data, label, im_info
     """
     assert len(roidb) == 1, 'Single batch only'
-    imgs, roidb = get_image(roidb)
+    imgs, img2, roidb = get_image(roidb)
     im_array = imgs[0]
+    im2_array = img2[0]
     im_info = np.array([roidb[0]['im_info']], dtype=np.float32)
 
     data = {'data': im_array,
+            'data': im2_array
             'im_info': im_info}
     label = {}
 
@@ -48,8 +50,9 @@ def get_rpn_batch(roidb):
     :return: data, label
     """
     assert len(roidb) == 1, 'Single batch only'
-    imgs, roidb = get_image(roidb, crop=config.TRAIN.CROP)
+    imgs, img2, roidb = get_image(roidb, crop=config.TRAIN.CROP)
     im_array = imgs[0]
+    im2_array = img2[0]
     im_info = np.array([roidb[0]['im_info']], dtype=np.float32)
 
     # gt boxes: (x1, y1, x2, y2, cls)
@@ -62,6 +65,7 @@ def get_rpn_batch(roidb):
         gt_boxes = np.empty((0, 5), dtype=np.float32)
 
     data = {'data': im_array,
+            'data2': im2_array,
             'im_info': im_info}
     label = {'gt_boxes': gt_boxes}
 

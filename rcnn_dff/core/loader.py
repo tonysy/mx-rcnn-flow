@@ -253,7 +253,7 @@ class AnchorLoader(mx.io.DataIter):
 
         # decide data and label names
         if config.TRAIN.END2END:
-            self.data_name = ['data', 'im_info', 'gt_boxes']
+            self.data_name = ['data','data2', 'im_info', 'gt_boxes']
         else:
             self.data_name = ['data']
         self.label_name = ['label', 'bbox_target', 'bbox_weight']
@@ -361,6 +361,10 @@ class AnchorLoader(mx.io.DataIter):
         data_tensor = tensor_vstack([batch['data'] for batch in data_list])
         for data, data_pad in zip(data_list, data_tensor):
             data['data'] = data_pad[np.newaxis, :]
+
+        data2_tensor = tensor_vstack([batch['data2'] for batch in data_list])
+        for data, data_pad in zip(data_list, data_tensor):
+            data['data2'] = data_pad[np.newaxis, :]
 
         new_label_list = []
         for data, label in zip(data_list, label_list):

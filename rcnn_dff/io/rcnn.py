@@ -32,7 +32,7 @@ def get_rcnn_testbatch(roidb):
     :return: data, label, im_info
     """
     assert len(roidb) == 1, 'Single batch only'
-    imgs, roidb = get_image(roidb)
+    imgs,img2, roidb = get_image(roidb)
     im_array = imgs[0]
     im_info = np.array([roidb[0]['im_info']], dtype=np.float32)
 
@@ -56,7 +56,7 @@ def get_rcnn_batch(roidb):
     :return: data, label
     """
     num_images = len(roidb)
-    imgs, roidb = get_image(roidb, crop=config.TRAIN.CROP)
+    imgs, img2, roidb = get_image(roidb, crop=config.TRAIN.CROP)
     im_array = tensor_vstack(imgs)
 
     assert config.TRAIN.BATCH_ROIS % config.TRAIN.BATCH_IMAGES == 0, \
