@@ -2,10 +2,10 @@ import mxnet as mx
 import numpy as np
 from mxnet.executor_manager import _split_input_slice
 
-from rcnn.config import config
-from rcnn.io.image import tensor_vstack
-from rcnn.io.rpn import get_rpn_testbatch, get_rpn_batch, assign_anchor
-from rcnn.io.rcnn import get_rcnn_testbatch, get_rcnn_batch
+from ..config import config
+from ..io.image import tensor_vstack
+from ..io.rpn import get_rpn_testbatch, get_rpn_batch, assign_anchor
+from ..io.rcnn import get_rcnn_testbatch, get_rcnn_batch
 
 
 class TestLoader(mx.io.DataIter):
@@ -326,6 +326,7 @@ class AnchorLoader(mx.io.DataIter):
         max_shapes = dict(max_data_shape + max_label_shape)
         input_batch_size = max_shapes['data'][0]
         im_info = [[max_shapes['data'][2], max_shapes['data'][3], 1.0]]
+        print im_info
         _, feat_shape, _ = self.feat_sym.infer_shape(**max_shapes)
         label = assign_anchor(feat_shape[0], np.zeros((0, 5)), im_info,
                               self.feat_stride, self.anchor_scales, self.anchor_ratios, self.allowed_border)
@@ -356,12 +357,12 @@ class AnchorLoader(mx.io.DataIter):
             data, label = get_rpn_batch(iroidb)
             data_list.append(data)
             label_list.append(label)
-
+        print "============data_list", data_list[0]['data'].shape
         # pad data first and then assign anchor (read label)
         data_tensor = tensor_vstack([batch['data'] for batch in data_list])
         for data, data_pad in zip(data_list, data_tensor):
             data['data'] = data_pad[np.newaxis, :]
-
+        print "=====",data['data'].shape
         data2_tensor = tensor_vstack([batch['data2'] for batch in data_list])
         for data, data_pad in zip(data_list, data_tensor):
             data['data2'] = data_pad[np.newaxis, :]
@@ -370,6 +371,7 @@ class AnchorLoader(mx.io.DataIter):
         for data, label in zip(data_list, label_list):
             # infer label shape
             data_shape = {k: v.shape for k, v in data.items()}
+            print "========",data_shape
             del data_shape['im_info']
             _, feat_shape, _ = self.feat_sym.infer_shape(**data_shape)
             feat_shape = [int(i) for i in feat_shape[0]]

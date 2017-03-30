@@ -6,7 +6,7 @@ import mxnet as mx
 import numpy as np
 from distutils.util import strtobool
 
-from rcnn.io.rcnn import sample_rois, get_rois
+from ..io.rcnn import sample_rois, get_rois
 
 DEBUG = False
 

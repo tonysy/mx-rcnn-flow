@@ -1,7 +1,7 @@
 import mxnet as mx
 import proposal
 import proposal_target
-from rcnn.config import config
+from ..config import config
 
 # enet settings
 eps = 1e-5 + 1e-10

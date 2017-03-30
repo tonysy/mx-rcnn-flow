@@ -208,4 +208,3 @@ def generate_config(_network, _dataset):
             config[k] = v
         elif k in default:
             default[k] = v
-

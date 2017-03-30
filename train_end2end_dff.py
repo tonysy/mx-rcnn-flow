@@ -51,6 +51,10 @@ def train_net(args, ctx, pretrained, epoch, prefix, begin_epoch, end_epoch,
     sym = eval('get_' + args.network + '_train_dff')(num_classes=config.NUM_CLASSES, num_anchors=config.NUM_ANCHORS)
     feat_sym = sym.get_internals()['rpn_cls_score_output']
     print "========symbol load"
+    # "data":(2,3,384,1280),"data2":(2,3,384,1280)
+    # net = mx.viz.plot_network(feat_sym, shape={'data':(2,3,376,1242),'data2':(2,3,384,1280)}, node_attrs={"shape": "rect", "fixedsize":"false"})
+    # net.render('feature_flow', view = True)
+
     # setup multi-gpu
     batch_size = len(ctx)
     input_batch_size = config.TRAIN.BATCH_IMAGES * batch_size
@@ -60,11 +64,11 @@ def train_net(args, ctx, pretrained, epoch, prefix, begin_epoch, end_epoch,
 
     # load dataset and prepare imdb for training
     image_sets = [iset for iset in args.image_set.split('+')]
-    print "========image set",image_sets
+    print "========image set"
     roidbs = [load_gt_roidb(args.dataset, image_set, args.root_path, args.dataset_path,
                             flip=not args.no_flip)
               for image_set in image_sets]
-    print roidbs
+    # print roidbs
     roidb = merge_roidb(roidbs)
     roidb = filter_roidb(roidb)
 
@@ -76,6 +80,15 @@ def train_net(args, ctx, pretrained, epoch, prefix, begin_epoch, end_epoch,
                               feat_stride=config.RPN_FEAT_STRIDE, anchor_scales=config.ANCHOR_SCALES,
                               anchor_ratios=config.ANCHOR_RATIOS, aspect_grouping=config.TRAIN.ASPECT_GROUPING)
 
+
+    print "========load data complete"
+    # =====================
+    # max_data_shape = [('data', (config.TRAIN.BATCH_IMAGES, 3, max([v[0] + 8 for v in config.SCALES]), max([v[1] + 38 for v in config.SCALES]))), ('data2', (config.TRAIN.BATCH_IMAGES, 3, max([v[0] + 8 for v in config.SCALES]), max([v[1] + 38 for v in config.SCALES])))]
+    # max_data_shape, max_label_shape = train_data.infer_shape(max_data_shape)
+    # max_data_shape.append(('gt_boxes', (config.TRAIN.BATCH_SIZE, 100, 5)))
+    # print 'providing maximum shape', max_data_shape, max_label_shape
+
+    # =====================
     # infer max shape
     if config.TRAIN.CROP == 'origin':
         max_data_shape = [('data', (input_batch_size, 3, max([v[0] for v in config.SCALES]), max([v[1] for v in config.SCALES])))]

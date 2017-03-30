@@ -22,8 +22,8 @@ def get_twin_path(roi_rec, rand_map, img_map):
     post = curr + 1
     img_info[2] = str(post).zfill(10)
 
-    rawdata_dir = '/data/zhicheng/kitti_rawdata'
-    img_path = os.path.join(rawdata_dir, img_info[0], img_info[1], 'image_02', 'data', img_info[2] + '.png')
+
+    img_path = os.path.join(config.RAWDATA_PAHT, img_info[0], img_info[1], 'image_02', 'data', img_info[2] + '.png')
     # print img_path
     return img_path
 
@@ -43,11 +43,10 @@ def get_image(roidb, crop='origin'):
     processed_im2 = []
     processed_roidb = []
 
-    rand_file = '/home/zhicheng/Projects/featureflow/devkit_object/mapping/train_rand.txt'
-    map_file = '/home/zhicheng/Projects/featureflow/devkit_object/mapping/train_mapping.txt'
+
 
     rand_map = []
-    with open(rand_file) as f:
+    with open(config.RAND_FILE) as f:
         for line in f:
             rand_map = line.strip().split(',')
     # print rand_map
@@ -55,7 +54,7 @@ def get_image(roidb, crop='origin'):
     # import time
     # time.sleep(2)
     img_map = []
-    with open(map_file) as f:
+    with open(config.MAP_FILE) as f:
         for line in f:
             line_list = line.strip().split(' ')
             img_map.append(line_list)
@@ -236,6 +235,7 @@ def get_image(roidb, crop='origin'):
             im, im_scale = resize(im, target_size, max_size, stride=config.IMAGE_STRIDE)
             im_tensor = transform(im, config.PIXEL_MEANS)
             processed_ims.append(im_tensor)
+
 
             twin_path = get_twin_path(roi_rec, rand_map, img_map)
 

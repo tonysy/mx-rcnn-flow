@@ -8,9 +8,9 @@ import numpy as np
 import numpy.random as npr
 from distutils.util import strtobool
 
-from rcnn.processing.bbox_transform import iou_pred, nonlinear_pred, clip_boxes
-from rcnn.processing.generate_anchor import generate_anchors
-from rcnn.processing.nms import py_nms_wrapper, cpu_nms_wrapper, gpu_nms_wrapper
+from ..processing.bbox_transform import iou_pred, nonlinear_pred, clip_boxes
+from ..processing.generate_anchor import generate_anchors
+from ..processing.nms import py_nms_wrapper, cpu_nms_wrapper, gpu_nms_wrapper
 
 DEBUG = False
 

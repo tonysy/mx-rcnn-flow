@@ -5,8 +5,8 @@ import rcnn_iou_loss
 import rpn_iou_loss
 import sample_anchors
 import sample_rois
-from rcnn.config import config
-from .symbol_flow import conv_unit, stereo_scale_net
+from ..config import config
+from symbol_flow import conv_unit, stereo_scale_net
 
 def get_vgg_conv(data):
     """
