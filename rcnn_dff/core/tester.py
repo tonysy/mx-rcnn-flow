@@ -5,10 +5,10 @@ import mxnet as mx
 import numpy as np
 
 from module import MutableModule
-from rcnn.config import config
-from rcnn.io import image
-from rcnn.processing.bbox_transform import nonlinear_pred, iou_pred, clip_boxes
-from rcnn.processing.nms import py_nms_wrapper, cpu_nms_wrapper, gpu_nms_wrapper
+from ..config import config
+from ..io import image
+from ..processing.bbox_transform import nonlinear_pred, iou_pred, clip_boxes
+from ..processing.nms import py_nms_wrapper, cpu_nms_wrapper, gpu_nms_wrapper
 if config.RCNN_IOU_LOSS:
     bbox_pred = iou_pred
 else:

@@ -3,7 +3,7 @@ from easydict import EasyDict as edict
 
 config = edict()
 
-config.RAWDATA_PAHT = '/home/syzhnag/titan6/zhicheng/kitti_rawdata'
+config.RAWDATA_PAHT = '/home/syzhang/titan6/zhicheng/kitti_rawdata'
 config.RAND_FILE = './devkit_object/mapping/train_rand.txt'
 config.MAP_FILE = './devkit_object/mapping/train_mapping.txt'
 # network related params
@@ -17,7 +17,8 @@ config.FIXED_PARAMS_SHARED = ['conv1', 'conv2', 'conv3', 'conv4', 'conv5']
 # dataset related params
 # config.NUM_CLASSES = 21
 config.NUM_CLASSES = 4
-config.SCALES = [(384, 1280)]  # first is scale (the shorter side); second is max size
+# config.SCALES = [(384, 1280)]  # first is scale (the shorter side); second is max size
+config.SCALES = [(376, 1242)]  # first is scale (the shorter side); second is max size
 # config.ANCHOR_SCALES = (8, 16, 32)
 config.ANCHOR_SCALES = (4, 8, 16, 24)
 config.ANCHOR_RATIOS = (0.5, 1, 2)
@@ -122,8 +123,8 @@ default = edict()
 
 # default network
 default.network = 'vgg'
-default.pretrained = 'model/vgg16'
-default.pretrained_epoch = 1
+default.pretrained = '/data/syzhang/model/vgg16-e2e'
+default.pretrained_epoch = 10
 default.base_lr = 0.001
 # default dataset
 default.dataset = 'PascalVOC'
@@ -185,8 +186,8 @@ dataset.Kitti.test_image_set = 'val'
 dataset.Kitti.root_path = 'data'
 dataset.Kitti.dataset_path = 'data/kitti'
 dataset.Kitti.NUM_CLASSES = 4
-# dataset.Kitti.SCALES = [(376, 1242)]
-dataset.Kitti.SCALES = [(384, 1280)]
+dataset.Kitti.SCALES = [(376, 1242)]
+# dataset.Kitti.SCALES = [(384, 1280)]
 
 # dataset.Kitti.ANCHOR_SCALES = (2, 4, 8, 16)
 dataset.Kitti.ANCHOR_SCALES = (4, 8, 16, 24)

@@ -36,7 +36,7 @@ def get_rpn_testbatch(roidb):
     im_info = np.array([roidb[0]['im_info']], dtype=np.float32)
 
     data = {'data': im_array,
-            'data': im2_array,
+            'data2': im2_array,
             'im_info': im_info}
     label = {}
 

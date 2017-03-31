@@ -243,11 +243,12 @@ def get_image(roidb, crop='origin'):
                 processed_im2.append(im_tensor)
                 print "twin pic {} does not exist\n".format(twin_path)
             else:
+                # print "===========find pic images"
                 im2 = cv2.imread(twin_path)
                 if roidb[i]['flipped']:
                     im2 = im2[:, ::-1, :]
-                im2, _ = image_processing.resize(im2, target_size, max_size, stride=config.IMAGE_STRIDE)
-                im2_tensor = image_processing.transform(im2, config.PIXEL_MEANS)
+                im2, _ = resize(im2, target_size, max_size, stride=config.IMAGE_STRIDE)
+                im2_tensor = transform(im2, config.PIXEL_MEANS)
                 processed_im2.append(im2_tensor)
 
             im_info = [im_tensor.shape[2], im_tensor.shape[3], im_scale]

@@ -25,7 +25,7 @@ class TestLoader(mx.io.DataIter):
 
         # decide data and label names (only for training)
         if has_rpn:
-            self.data_name = ['data', 'im_info']
+            self.data_name = ['data', 'data2', 'im_info']
         else:
             self.data_name = ['data', 'rois']
         self.label_name = None
@@ -357,12 +357,12 @@ class AnchorLoader(mx.io.DataIter):
             data, label = get_rpn_batch(iroidb)
             data_list.append(data)
             label_list.append(label)
-        print "============data_list", data_list[0]['data'].shape
+        # print "============data_list", data_list[0]['data'].shape
         # pad data first and then assign anchor (read label)
         data_tensor = tensor_vstack([batch['data'] for batch in data_list])
         for data, data_pad in zip(data_list, data_tensor):
             data['data'] = data_pad[np.newaxis, :]
-        print "=====",data['data'].shape
+        # print "=====",data['data'].shape
         data2_tensor = tensor_vstack([batch['data2'] for batch in data_list])
         for data, data_pad in zip(data_list, data_tensor):
             data['data2'] = data_pad[np.newaxis, :]
@@ -371,7 +371,7 @@ class AnchorLoader(mx.io.DataIter):
         for data, label in zip(data_list, label_list):
             # infer label shape
             data_shape = {k: v.shape for k, v in data.items()}
-            print "========",data_shape
+            # print "========",data_shape
             del data_shape['im_info']
             _, feat_shape, _ = self.feat_sym.infer_shape(**data_shape)
             feat_shape = [int(i) for i in feat_shape[0]]

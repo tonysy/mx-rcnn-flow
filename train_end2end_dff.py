@@ -22,23 +22,36 @@ def train_net(args, ctx, pretrained, epoch, prefix, begin_epoch, end_epoch,
     # logging.basicConfig()
     # logger = logging.getLogger()
     # logger.setLevel(logging.INFO)
+
     # new logger that also save log file on the dist
+    # d = datetime.datetime.now().strftime("%Y%m%d_%H%M%S") # create log file name
+    # log_path = os.path.join('log', os.path.basename(prefix)) #get prefix basename: os.path.basename('zhang/song')='song'
+    # if not os.path.exists(log_path):
+    #     os.makedirs(log_path)
+    # logging.basicConfig(level=logging.DEBUG,
+    #                     format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
+    #                     datefmt='%m-%d %H:%M',
+    #                     filename=os.path.join(log_path, d + '_epoch'+ str(end_epoch)+'.log'),
+    #                     filemode='w')
+    #
+    # console = logging.StreamHandler()
+    # console.setLevel(logging.INFO)
+    # formatter = logging.Formatter('%(name)-12s: %(levelname)-8s %(message)s')
+    # console.setFormatter(formatter)
+    # logging.getLogger('').addHandler(console)
+    # logging.info('start with arguments %s', args)
+
     d = datetime.datetime.now().strftime("%Y%m%d_%H%M%S") # create log file name
     log_path = os.path.join('log', os.path.basename(prefix)) #get prefix basename: os.path.basename('zhang/song')='song'
     if not os.path.exists(log_path):
         os.makedirs(log_path)
-    logging.basicConfig(level=logging.DEBUG,
+    logger = logging.basicConfig(level=logging.DEBUG,
                         format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
                         datefmt='%m-%d %H:%M',
                         filename=os.path.join(log_path, d + '_epoch'+ str(end_epoch)+'.log'),
                         filemode='w')
-
-    console = logging.StreamHandler()
-    console.setLevel(logging.INFO)
-    formatter = logging.Formatter('%(name)-12s: %(levelname)-8s %(message)s')
-    console.setFormatter(formatter)
-    logging.getLogger('').addHandler(console)
-    logging.info('start with arguments %s', args)
+    logger = logging.getLogger()
+    logger.setLevel(logging.INFO)
 
     # setup config
     config.TRAIN.BATCH_IMAGES = 1
@@ -91,7 +104,13 @@ def train_net(args, ctx, pretrained, epoch, prefix, begin_epoch, end_epoch,
     # =====================
     # infer max shape
     if config.TRAIN.CROP == 'origin':
-        max_data_shape = [('data', (input_batch_size, 3, max([v[0] for v in config.SCALES]), max([v[1] for v in config.SCALES])))]
+        # max_data_shape = [('data', (input_batch_size, 3, max([v[0] for v in config.SCALES]), max([v[1] for v in config.SCALES]))),('data2', (input_batch_size, 3, max([v[0] for v in config.SCALES]), max([v[1] for v in config.SCALES])))]
+        max_data_shape = [('data', (input_batch_size, 3, \
+                                    max([v[0] + 8 for v in config.SCALES]), \
+                                    max([v[1] + 38 for v in config.SCALES]))), \
+                          ('data2', (input_batch_size, 3, \
+                                    max([v[0] + 8 for v in config.SCALES]), \
+                                    max([v[1] + 38 for v in config.SCALES])))]
         max_data_shape, max_label_shape = train_data.infer_shape(max_data_shape)
         max_data_shape.append(('gt_boxes', (input_batch_size, 100, 5)))
         print 'providing maximum shape', max_data_shape, max_label_shape
@@ -135,7 +154,7 @@ def train_net(args, ctx, pretrained, epoch, prefix, begin_epoch, end_epoch,
                 init(k, aux_params[k])
 
     # load flownet parameter and merge with rcnn's
-    flow_model_path = './model/flow_model/flow'
+    flow_model_path = '/data/syzhang/model/flow/flow'
     _, flow_arg_params, flow_aux_params = mx.model.load_checkpoint(flow_model_path, 0)
     arg_params.update(flow_arg_params) # dict.update(dict2) add dict2 into dict
     aux_params.update(flow_aux_params)

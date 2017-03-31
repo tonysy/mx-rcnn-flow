@@ -81,5 +81,9 @@ target/
 *.json
 .vscode/
 
-model
+# model
 model/
+model.version.1/
+
+# log
+log/
