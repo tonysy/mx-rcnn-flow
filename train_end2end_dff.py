@@ -24,34 +24,34 @@ def train_net(args, ctx, pretrained, epoch, prefix, begin_epoch, end_epoch,
     # logger.setLevel(logging.INFO)
 
     # new logger that also save log file on the dist
-    # d = datetime.datetime.now().strftime("%Y%m%d_%H%M%S") # create log file name
-    # log_path = os.path.join('log', os.path.basename(prefix)) #get prefix basename: os.path.basename('zhang/song')='song'
-    # if not os.path.exists(log_path):
-    #     os.makedirs(log_path)
-    # logging.basicConfig(level=logging.DEBUG,
-    #                     format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
-    #                     datefmt='%m-%d %H:%M',
-    #                     filename=os.path.join(log_path, d + '_epoch'+ str(end_epoch)+'.log'),
-    #                     filemode='w')
-    #
-    # console = logging.StreamHandler()
-    # console.setLevel(logging.INFO)
-    # formatter = logging.Formatter('%(name)-12s: %(levelname)-8s %(message)s')
-    # console.setFormatter(formatter)
-    # logging.getLogger('').addHandler(console)
-    # logging.info('start with arguments %s', args)
-
     d = datetime.datetime.now().strftime("%Y%m%d_%H%M%S") # create log file name
     log_path = os.path.join('log', os.path.basename(prefix)) #get prefix basename: os.path.basename('zhang/song')='song'
     if not os.path.exists(log_path):
         os.makedirs(log_path)
-    logger = logging.basicConfig(level=logging.DEBUG,
+    logging.basicConfig(level=logging.DEBUG,
                         format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
                         datefmt='%m-%d %H:%M',
                         filename=os.path.join(log_path, d + '_epoch'+ str(end_epoch)+'.log'),
                         filemode='w')
-    logger = logging.getLogger()
-    logger.setLevel(logging.INFO)
+
+    console = logging.StreamHandler()
+    console.setLevel(logging.INFO)
+    formatter = logging.Formatter('%(name)-12s: %(levelname)-8s %(message)s')
+    console.setFormatter(formatter)
+    logging.getLogger('').addHandler(console)
+    logging.info('start with arguments %s', args)
+
+    # d = datetime.datetime.now().strftime("%Y%m%d_%H%M%S") # create log file name
+    # log_path = os.path.join('log', os.path.basename(prefix)) #get prefix basename: os.path.basename('zhang/song')='song'
+    # if not os.path.exists(log_path):
+    #     os.makedirs(log_path)
+    # logger = logging.basicConfig(level=logging.DEBUG,
+    #                     format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
+    #                     datefmt='%m-%d %H:%M',
+    #                     filename=os.path.join(log_path, d + '_epoch'+ str(end_epoch)+'.log'),
+    #                     filemode='w')
+    # logger = logging.getLogger()
+    # logger.setLevel(logging.INFO)
 
     # setup config
     config.TRAIN.BATCH_IMAGES = 1
@@ -173,10 +173,11 @@ def train_net(args, ctx, pretrained, epoch, prefix, begin_epoch, end_epoch,
 
     # create solver
     fixed_param_prefix = config.FIXED_PARAMS
+    fixed_param_prefix += flow_arg_params.keys() + flow_aux_params.keys()
+
     data_names = [k[0] for k in train_data.provide_data]
     label_names = [k[0] for k in train_data.provide_label]
-    mod = MutableModule(sym, data_names=data_names, label_names=label_names,
-                        logger=logger, context=ctx, work_load_list=args.work_load_list,
+    mod = MutableModule(sym, data_names=data_names, label_names=label_names, context=ctx, work_load_list=args.work_load_list,
                         max_data_shapes=max_data_shape, max_label_shapes=max_label_shape,
                         fixed_param_prefix=fixed_param_prefix)
 

@@ -51,7 +51,7 @@ class IMDB(object):
         make a directory to store all caches
         :return: cache path
         """
-        cache_path = os.path.join(self.root_path, 'cache')
+        cache_path = os.path.join(self.root_path, 'cache_no_dff')
         if not os.path.exists(cache_path):
             os.mkdir(cache_path)
         return cache_path
