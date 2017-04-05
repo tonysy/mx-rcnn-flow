@@ -1,3 +1,5 @@
+import sys
+sys.path.insert(0, '/home/syzhang/mxnet_0.7.0/python/')
 import argparse
 import logging
 import pprint
@@ -104,13 +106,13 @@ def train_net(args, ctx, pretrained, epoch, prefix, begin_epoch, end_epoch,
     # =====================
     # infer max shape
     if config.TRAIN.CROP == 'origin':
-        # max_data_shape = [('data', (input_batch_size, 3, max([v[0] for v in config.SCALES]), max([v[1] for v in config.SCALES]))),('data2', (input_batch_size, 3, max([v[0] for v in config.SCALES]), max([v[1] for v in config.SCALES])))]
-        max_data_shape = [('data', (input_batch_size, 3, \
-                                    max([v[0] + 8 for v in config.SCALES]), \
-                                    max([v[1] + 38 for v in config.SCALES]))), \
-                          ('data2', (input_batch_size, 3, \
-                                    max([v[0] + 8 for v in config.SCALES]), \
-                                    max([v[1] + 38 for v in config.SCALES])))]
+        max_data_shape = [('data', (input_batch_size, 3, max([v[0] for v in config.SCALES]), max([v[1] for v in config.SCALES]))),('data2', (input_batch_size, 3, max([v[0] for v in config.SCALES]), max([v[1] for v in config.SCALES])))]
+        # max_data_shape = [('data', (input_batch_size, 3, \
+        #                             max([v[0] + 8 for v in config.SCALES]), \
+        #                             max([v[1] + 38 for v in config.SCALES]))), \
+        #                   ('data2', (input_batch_size, 3, \
+        #                             max([v[0] + 8 for v in config.SCALES]), \
+        #                             max([v[1] + 38 for v in config.SCALES])))]
         max_data_shape, max_label_shape = train_data.infer_shape(max_data_shape)
         max_data_shape.append(('gt_boxes', (input_batch_size, 100, 5)))
         print 'providing maximum shape', max_data_shape, max_label_shape

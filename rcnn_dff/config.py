@@ -6,6 +6,9 @@ config = edict()
 config.RAWDATA_PAHT = '/home/syzhang/titan6/zhicheng/kitti_rawdata'
 config.RAND_FILE = './devkit_object/mapping/train_rand.txt'
 config.MAP_FILE = './devkit_object/mapping/train_mapping.txt'
+
+config.FLOW_SCALE_FACTOR = 0.00390625 # 0.00392156
+
 # network related params
 config.PIXEL_MEANS = np.array([103.939, 116.779, 123.68])
 config.IMAGE_STRIDE = 64
@@ -17,8 +20,8 @@ config.FIXED_PARAMS_SHARED = ['conv1', 'conv2', 'conv3', 'conv4', 'conv5']
 # dataset related params
 # config.NUM_CLASSES = 21
 config.NUM_CLASSES = 4
-# config.SCALES = [(384, 1280)]  # first is scale (the shorter side); second is max size
-config.SCALES = [(376, 1242)]  # first is scale (the shorter side); second is max size
+config.SCALES = [(384, 1280)]  # first is scale (the shorter side); second is max size
+# config.SCALES = [(376, 1242)]  # first is scale (the shorter side); second is max size
 # config.ANCHOR_SCALES = (8, 16, 32)
 config.ANCHOR_SCALES = (4, 8, 16, 24)
 config.ANCHOR_RATIOS = (0.5, 1, 2)
@@ -186,8 +189,8 @@ dataset.Kitti.test_image_set = 'val'
 dataset.Kitti.root_path = 'data'
 dataset.Kitti.dataset_path = 'data/kitti'
 dataset.Kitti.NUM_CLASSES = 4
-dataset.Kitti.SCALES = [(376, 1242)]
-# dataset.Kitti.SCALES = [(384, 1280)]
+# dataset.Kitti.SCALES = [(376, 1242)]
+dataset.Kitti.SCALES = [(384, 1280)]
 
 # dataset.Kitti.ANCHOR_SCALES = (2, 4, 8, 16)
 dataset.Kitti.ANCHOR_SCALES = (4, 8, 16, 24)

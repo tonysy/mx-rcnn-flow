@@ -1,6 +1,8 @@
 import argparse
 import logging
 import pprint
+import datetime
+import os
 import mxnet as mx
 import numpy as np
 
@@ -16,9 +18,27 @@ from rcnn.utils.load_model import load_param
 def train_net(args, ctx, pretrained, epoch, prefix, begin_epoch, end_epoch,
               lr=0.001, lr_step='5'):
     # set up logger
-    logging.basicConfig()
-    logger = logging.getLogger()
-    logger.setLevel(logging.INFO)
+    # logging.basicConfig()
+    # logger = logging.getLogger()
+    # logger.setLevel(logging.INFO)
+
+    d = datetime.datetime.now().strftime("%Y%m%d_%H%M%S") # create log file name
+    log_path = os.path.join('log', os.path.basename(prefix)) #get prefix basename: os.path.basename('zhang/song')='song'
+    if not os.path.exists(log_path):
+        os.makedirs(log_path)
+    logging.basicConfig(level=logging.DEBUG,
+                        format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
+                        datefmt='%m-%d %H:%M',
+                        filename=os.path.join(log_path, d + '_epoch'+ str(end_epoch)+'.log'),
+                        filemode='w')
+
+    console = logging.StreamHandler()
+    console.setLevel(logging.INFO)
+    formatter = logging.Formatter('%(name)-12s: %(levelname)-8s %(message)s')
+    console.setFormatter(formatter)
+    logging.getLogger('').addHandler(console)
+    logging.info('start with arguments %s', args)
+
 
     # setup config
     config.TRAIN.BATCH_IMAGES = 1
@@ -112,7 +132,7 @@ def train_net(args, ctx, pretrained, epoch, prefix, begin_epoch, end_epoch,
     data_names = [k[0] for k in train_data.provide_data]
     label_names = [k[0] for k in train_data.provide_label]
     mod = MutableModule(sym, data_names=data_names, label_names=label_names,
-                        logger=logger, context=ctx, work_load_list=args.work_load_list,
+                        context=ctx, work_load_list=args.work_load_list,
                         max_data_shapes=max_data_shape, max_label_shapes=max_label_shape,
                         fixed_param_prefix=fixed_param_prefix)
 

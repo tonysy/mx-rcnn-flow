@@ -194,6 +194,48 @@ def stereo_scale_net(data, data2, net_type='flow', is_sparse = False):
 
     return net
 
+def feature_propagate(relu5_3, data, data2):
+    flownet = stereo_scale_net(data*config.FLOW_SCALE_FACTOR, \
+                               data2*config.FLOW_SCALE_FACTOR,\
+                               net_type='flow')
+    flow = flownet[0]
+    scale = flownet[1]
+    scale_avg = mx.sym.Pooling(data=scale*0.125, pool_type='avg',\
+                               kernel=(8,8),stride=(8,8),name="scale_avg")
+    flow_avg = mx.sym.Pooling(data=flow*0.125, pool_type='avg',\
+                               kernel=(8,8),stride=(8,8),name="flow_avg")
+
+    flow_grid = mx.symbol.GridGenerator(data=flow_avg,transform_type='warp',\
+                                        name='flow_grid')
+    warp_res = mx.symbol.BilinearSampler(data=relu5_3,grid=flow_grid,\
+                                         name='warp_res')
+
+    relu5_3_ = warp_res * scale_avg
+
+    return relu5_3_
+
+def feature_warp(relu5_3, data, data2):
+    # flownet
+    flownet = stereo_scale_net(data * 0.00392156, data2 * 0.00392156, net_type='flow')
+
+    flow = flownet[0]
+    scale = flownet[1]
+    scale_avg = mx.sym.Pooling(
+        data=scale*0.125, pool_type="avg", kernel=(8, 8), stride=(8, 8), name="flow_avg")
+    flow_avg = mx.sym.Pooling(
+        data=flow*0.125, pool_type="avg", kernel=(8, 8), stride=(8, 8), name="flow_avg")
+    flow_transpose = mx.sym.transpose(
+            data=flow_avg, axes=(0, 2, 3, 1), name="flow_transpose")
+
+    relu5_3_transpose = mx.sym.transpose(
+            data=relu5_3, axes=(0, 2, 3, 1), name="relu5_3_transpose")
+    warp_res = mx.sym.Warp(
+            data=relu5_3_transpose, grid=flow_transpose, name="warp")
+    warp_transpose = mx.sym.transpose(
+            data=warp_res, axes=(0, 3, 1, 2), name="warp_transpose")
+    relu5_3_ = warp_transpose * scale_avg
+
+    return relu5_3_
 
 def stereo_net(data, data2, net_type='flow', is_sparse = False):
 

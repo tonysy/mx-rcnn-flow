@@ -1,1 +1,1 @@
-python train_end2end_dff.py --dataset Kitti --gpu 6,7 --image_set train --dataset_path data/kitti --prefix model/e2e-fix-flow --end_epoch 15
+python train_end2end_dff.py --dataset Kitti --gpu 6,7 --image_set train --dataset_path data/kitti --prefix model/e2e-fix-flow-edit-factor-warp --end_epoch 15 --pretrained model/e2e-rcnn --pretrained_epoch 10

@@ -6,7 +6,7 @@ import rpn_iou_loss
 import sample_anchors
 import sample_rois
 from ..config import config
-from symbol_flow import conv_unit, stereo_scale_net
+from symbol_flow import conv_unit, stereo_scale_net, feature_warp, feature_propagate
 
 def get_vgg_conv(data):
     """
@@ -795,22 +795,26 @@ def get_vgg_train_dff(num_classes=config.NUM_CLASSES, num_anchors=config.NUM_ANC
 
     # shared convolutional layers
     # relu5_3 = get_vgg_conv(data)
+
     relu5_3 = get_vgg_dilate_conv(data2)
-    flownet = stereo_scale_net(data*0.00390625, data2*0.00390625,\
-                               net_type='flow')
-    flow = flownet[0]
-    scale = flownet[1]
-    scale_avg = mx.sym.Pooling(data=scale*0.125, pool_type='avg',\
-                               kernel=(8,8),stride=(8,8),name="scale_avg")
-    flow_avg = mx.sym.Pooling(data=flow*0.125, pool_type='avg',\
-                               kernel=(8,8),stride=(8,8),name="flow_avg")
+    relu5_3 = feature_propagate(relu5_3, data, data2)
 
-    flow_grid = mx.symbol.GridGenerator(data=flow_avg,transform_type='warp',\
-                                        name='flow_grid')
-    warp_res = mx.symbol.BilinearSampler(data=relu5_3,grid=flow_grid,\
-                                         name='warp_res')
-
-    relu5_3 = warp_res * scale_avg
+    # flownet = stereo_scale_net(data*config.FLOW_SCALE_FACTOR, \
+    #                            data2*config.FLOW_SCALE_FACTOR,\
+    #                            net_type='flow')
+    # flow = flownet[0]
+    # scale = flownet[1]
+    # scale_avg = mx.sym.Pooling(data=scale*0.125, pool_type='avg',\
+    #                            kernel=(8,8),stride=(8,8),name="scale_avg")
+    # flow_avg = mx.sym.Pooling(data=flow*0.125, pool_type='avg',\
+    #                            kernel=(8,8),stride=(8,8),name="flow_avg")
+    #
+    # flow_grid = mx.symbol.GridGenerator(data=flow_avg,transform_type='warp',\
+    #                                     name='flow_grid')
+    # warp_res = mx.symbol.BilinearSampler(data=relu5_3,grid=flow_grid,\
+    #                                      name='warp_res')
+    #
+    # relu5_3 = warp_res * scale_avg
 
     # RPN layers
     rpn_conv = mx.symbol.Convolution(
@@ -964,21 +968,24 @@ def get_vgg_test_dff(num_classes=config.NUM_CLASSES, num_anchors=config.NUM_ANCH
     # shared convolutional layers
     # relu5_3 = get_vgg_conv(data)
     relu5_3 = get_vgg_dilate_conv(data2)
-    flownet = stereo_scale_net(data*0.00390625, data2*0.00390625,\
-                               net_type='flow')
-    flow = flownet[0]
-    scale = flownet[1]
-    scale_avg = mx.sym.Pooling(data=scale*0.125, pool_type='avg',\
-                               kernel=(8,8),stride=(8,8),name="scale_avg")
-    flow_avg = mx.sym.Pooling(data=flow*0.125, pool_type='avg',\
-                               kernel=(8,8),stride=(8,8),name="flow_avg")
+    relu5_3 = feature_propagate(relu5_3, data, data2)
 
-    flow_grid = mx.symbol.GridGenerator(data=flow_avg,transform_type='warp',\
-                                        name='flow_grid')
-    warp_res = mx.symbol.BilinearSampler(data=relu5_3,grid=flow_grid,\
-                                         name='warp_res')
-
-    relu5_3 = warp_res * scale_avg
+    # flownet = stereo_scale_net(data*config.FLOW_SCALE_FACTOR, \
+    #                            data2*config.FLOW_SCALE_FACTOR,\
+    #                            net_type='flow')
+    # flow = flownet[0]
+    # scale = flownet[1]
+    # scale_avg = mx.sym.Pooling(data=scale*0.125, pool_type='avg',\
+    #                            kernel=(8,8),stride=(8,8),name="scale_avg")
+    # flow_avg = mx.sym.Pooling(data=flow*0.125, pool_type='avg',\
+    #                            kernel=(8,8),stride=(8,8),name="flow_avg")
+    #
+    # flow_grid = mx.symbol.GridGenerator(data=flow_avg,transform_type='warp',\
+    #                                     name='flow_grid')
+    # warp_res = mx.symbol.BilinearSampler(data=relu5_3,grid=flow_grid,\
+    #                                      name='warp_res')
+    #
+    # relu5_3 = warp_res * scale_avg
 
     # RPN
     rpn_conv = mx.symbol.Convolution(
