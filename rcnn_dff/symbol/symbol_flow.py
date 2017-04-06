@@ -212,7 +212,7 @@ def feature_propagate(relu5_3, data, data2):
 
     relu5_3_ = warp_res * scale_avg
 
-    return relu5_3_
+    return relu5_3_, flow, flow_avg
 
 def feature_warp(relu5_3, data, data2):
     # flownet
@@ -235,7 +235,7 @@ def feature_warp(relu5_3, data, data2):
             data=warp_res, axes=(0, 3, 1, 2), name="warp_transpose")
     relu5_3_ = warp_transpose * scale_avg
 
-    return relu5_3_
+    return relu5_3_, flow, flow_avg
 
 def stereo_net(data, data2, net_type='flow', is_sparse = False):
 

@@ -29,7 +29,8 @@ def plot_curve(metric, log_file):
     # ax = plt.subplot(1,1,1)
 
     metric_list = ["LogLoss", 'L1Loss']
-    ylimm_list = [0.15, 1.2]
+    ylimm_list = [0.06, 1.0]
+    y_size_list = [0.005, 0.2]
     linestyle_list = ['-', '--']
     for i, item in enumerate(metric_list):
         log_rpn, log_rcnn, idx, metric_name = log_parse(item, log_file)
@@ -59,7 +60,7 @@ def plot_curve(metric, log_file):
 
         ymajorLocator   = MultipleLocator(0.1) #将y轴主刻度标签设置为0.5的倍数
         ymajorFormatter = FormatStrFormatter('%1.1f') #设置y轴标签文本的格式
-        yminorLocator   = MultipleLocator(0.1) #将此y轴次刻度标签设置为0.1的倍数
+        yminorLocator   = MultipleLocator(y_size_list[i]) #将此y轴次刻度标签设置为0.1的倍数
 
         ax.xaxis.set_major_locator(xmajorLocator)
         ax.xaxis.set_major_formatter(xmajorFormatter)

@@ -364,7 +364,7 @@ class AnchorLoader(mx.io.DataIter):
             data['data'] = data_pad[np.newaxis, :]
         # print "=====",data['data'].shape
         data2_tensor = tensor_vstack([batch['data2'] for batch in data_list])
-        for data, data_pad in zip(data_list, data_tensor):
+        for data, data_pad in zip(data_list, data2_tensor):
             data['data2'] = data_pad[np.newaxis, :]
 
         new_label_list = []

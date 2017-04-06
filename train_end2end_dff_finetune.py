@@ -33,7 +33,7 @@ def train_net(args, ctx, pretrained, epoch, prefix, begin_epoch, end_epoch,
     logging.basicConfig(level=logging.DEBUG,
                         format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
                         datefmt='%m-%d %H:%M',
-                        filename=os.path.join(log_path, d + '_epoch'+ str(end_epoch)+'.log'),
+                        filename=os.path.join(log_path, d + '_epoch'+ str(end_epoch)+'_finetune.log'),
                         filemode='w')
 
     console = logging.StreamHandler()
@@ -137,7 +137,7 @@ def train_net(args, ctx, pretrained, epoch, prefix, begin_epoch, end_epoch,
     else:
         arg_params, aux_params = load_param(pretrained, epoch, convert=True)
     # initialize params
-        
+
         # arg_params['conv5_1_weight'] = mx.random.normal(0, 0.01, shape=arg_shape_dict['conv5_1_weight'])
         # arg_params['conv5_1_bias'] = mx.nd.zeros(shape=arg_shape_dict['conv5_1_bias'])
         # arg_params['conv5_2_weight'] = mx.random.normal(0, 0.01, shape=arg_shape_dict['conv5_2_weight'])
@@ -158,25 +158,25 @@ def train_net(args, ctx, pretrained, epoch, prefix, begin_epoch, end_epoch,
         # arg_params['bbox_pred_bias'] = mx.nd.zeros(shape=arg_shape_dict['bbox_pred_bias'])
         #
 
-        init = mx.init.Xavier(factor_type="in", rnd_type='gaussian', magnitude=2)
-        for k in sym.list_arguments():
-            if k in data_shape_dict:
-                continue
-            if k not in arg_params:
-                print 'init', k
-                arg_params[k] = mx.nd.zeros(shape=arg_shape_dict[k])
-                init(k, arg_params[k])
-                arg_params[k][:] /= 10
-                if 'ctx_red_weight' in k:
-                    ctx_shape = np.array(arg_shape_dict[k])
-                    ctx_shape[1] /= 2
-                    arg_params[k][:] = np.concatenate((np.eye(ctx_shape[1]).reshape(ctx_shape), np.zeros(ctx_shape)), axis=1)
-
-        for k in sym.list_auxiliary_states():
-            if k not in aux_params:
-                print 'init', k
-                aux_params[k] = mx.nd.zeros(shape=aux_shape_dict[k])
-                init(k, aux_params[k])
+        # init = mx.init.Xavier(factor_type="in", rnd_type='gaussian', magnitude=2)
+        # for k in sym.list_arguments():
+        #     if k in data_shape_dict:
+        #         continue
+        #     if k not in arg_params:
+        #         print 'init', k
+        #         arg_params[k] = mx.nd.zeros(shape=arg_shape_dict[k])
+        #         init(k, arg_params[k])
+        #         arg_params[k][:] /= 10
+        #         if 'ctx_red_weight' in k:
+        #             ctx_shape = np.array(arg_shape_dict[k])
+        #             ctx_shape[1] /= 2
+        #             arg_params[k][:] = np.concatenate((np.eye(ctx_shape[1]).reshape(ctx_shape), np.zeros(ctx_shape)), axis=1)
+        #
+        # for k in sym.list_auxiliary_states():
+        #     if k not in aux_params:
+        #         print 'init', k
+        #         aux_params[k] = mx.nd.zeros(shape=aux_shape_dict[k])
+        #         init(k, aux_params[k])
 
     # load flownet parameter and merge with rcnn's
     flow_model_path = '/data/syzhang/model/flow/flow'
@@ -232,17 +232,25 @@ def train_net(args, ctx, pretrained, epoch, prefix, begin_epoch, end_epoch,
     print 'lr', lr, 'lr_epoch_diff', lr_epoch_diff, 'lr_iters', lr_iters
     lr_scheduler = mx.lr_scheduler.MultiFactorScheduler(lr_iters, lr_factor)
     # optimizer
-    optimizer_params = {'momentum': 0.9,
-                        'wd': 0.0005,
-                        'learning_rate': lr,
-                        'lr_scheduler': lr_scheduler,
-                        'rescale_grad': (1.0 / batch_size),
-                        'clip_gradient': 5}
+    if not args.finetune:
+        opt = 'sgd'
+        optimizer_params = {'momentum': 0.9,
+                            'wd': 0.0005,
+                            'learning_rate': lr,
+                            'lr_scheduler': lr_scheduler,
+                            'rescale_grad': (1.0 / batch_size),
+                            'clip_gradient': 5}
+    else:
+        opt = 'Adam'
+        optimizer_params = {'learning_rate' : lr,
+                            'lr_scheduler' : lr_scheduler,
+                            'rescale_grad' : (1.0 / batch_size)}
+
 
     # train
     mod.fit(train_data, eval_metric=eval_metrics, epoch_end_callback=epoch_end_callback,
             batch_end_callback=batch_end_callback, kvstore=args.kvstore,
-            optimizer='sgd', optimizer_params=optimizer_params,
+            optimizer=opt, optimizer_params=optimizer_params,
             arg_params=arg_params, aux_params=aux_params, begin_epoch=begin_epoch, num_epoch=end_epoch)
 
 
@@ -263,6 +271,7 @@ def parse_args():
     parser.add_argument('--no_flip', help='disable flip images', action='store_true')
     parser.add_argument('--no_shuffle', help='disable random shuffle', action='store_true')
     parser.add_argument('--resume', help='continue training', action='store_true')
+    parser.add_argument('--finetune', help='continue training', action='store_true')
     # e2e
     parser.add_argument('--gpus', help='GPU device to train with', default='0', type=str)
     parser.add_argument('--pretrained', help='pretrained model prefix', default=default.pretrained, type=str)

@@ -797,7 +797,7 @@ def get_vgg_train_dff(num_classes=config.NUM_CLASSES, num_anchors=config.NUM_ANC
     # relu5_3 = get_vgg_conv(data)
 
     relu5_3 = get_vgg_dilate_conv(data2)
-    relu5_3 = feature_propagate(relu5_3, data, data2)
+    relu5_3, _, _ = feature_propagate(relu5_3, data, data2)
 
     # flownet = stereo_scale_net(data*config.FLOW_SCALE_FACTOR, \
     #                            data2*config.FLOW_SCALE_FACTOR,\
@@ -968,7 +968,7 @@ def get_vgg_test_dff(num_classes=config.NUM_CLASSES, num_anchors=config.NUM_ANCH
     # shared convolutional layers
     # relu5_3 = get_vgg_conv(data)
     relu5_3 = get_vgg_dilate_conv(data2)
-    relu5_3 = feature_propagate(relu5_3, data, data2)
+    relu5_3, flow, flow_avg = feature_propagate(relu5_3, data, data2)
 
     # flownet = stereo_scale_net(data*config.FLOW_SCALE_FACTOR, \
     #                            data2*config.FLOW_SCALE_FACTOR,\
@@ -1049,5 +1049,6 @@ def get_vgg_test_dff(num_classes=config.NUM_CLASSES, num_anchors=config.NUM_ANCH
     bbox_pred = mx.symbol.Reshape(data=bbox_pred, shape=(config.TEST.BATCH_IMAGES, -1, 4 * num_classes), name='bbox_pred_reshape')
 
     # group output
-    group = mx.symbol.Group([rois, cls_prob, bbox_pred])
+    # group = mx.symbol.Group([rois, cls_prob, bbox_pred])
+    group = mx.symbol.Group([rois, cls_prob, bbox_pred, flow, flow_avg])
     return group
