@@ -21,9 +21,6 @@ from rcnn_dff.utils.load_model import load_param
 def train_net(args, ctx, pretrained, epoch, prefix, begin_epoch, end_epoch,
               lr=0.001, lr_step='5'):
     # set up logger
-    # logging.basicConfig()
-    # logger = logging.getLogger()
-    # logger.setLevel(logging.INFO)
 
     # new logger that also save log file on the dist
     d = datetime.datetime.now().strftime("%Y%m%d_%H%M%S") # create log file name
@@ -43,18 +40,6 @@ def train_net(args, ctx, pretrained, epoch, prefix, begin_epoch, end_epoch,
     logging.getLogger('').addHandler(console)
     logging.info('start with arguments %s', args)
 
-    # d = datetime.datetime.now().strftime("%Y%m%d_%H%M%S") # create log file name
-    # log_path = os.path.join('log', os.path.basename(prefix)) #get prefix basename: os.path.basename('zhang/song')='song'
-    # if not os.path.exists(log_path):
-    #     os.makedirs(log_path)
-    # logger = logging.basicConfig(level=logging.DEBUG,
-    #                     format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
-    #                     datefmt='%m-%d %H:%M',
-    #                     filename=os.path.join(log_path, d + '_epoch'+ str(end_epoch)+'.log'),
-    #                     filemode='w')
-    # logger = logging.getLogger()
-    # logger.setLevel(logging.INFO)
-
     # setup config
     config.TRAIN.BATCH_IMAGES = 1
     config.TRAIN.BATCH_ROIS = 128
@@ -67,9 +52,6 @@ def train_net(args, ctx, pretrained, epoch, prefix, begin_epoch, end_epoch,
     sym = eval('get_' + args.network + '_train_dff')(num_classes=config.NUM_CLASSES, num_anchors=config.NUM_ANCHORS)
     feat_sym = sym.get_internals()['rpn_cls_score_output']
     print "========symbol load"
-    # "data":(2,3,384,1280),"data2":(2,3,384,1280)
-    # net = mx.viz.plot_network(feat_sym, shape={'data':(2,3,376,1242),'data2':(2,3,384,1280)}, node_attrs={"shape": "rect", "fixedsize":"false"})
-    # net.render('feature_flow', view = True)
 
     # setup multi-gpu
     batch_size = len(ctx)
@@ -99,21 +81,10 @@ def train_net(args, ctx, pretrained, epoch, prefix, begin_epoch, end_epoch,
 
     print "========load data complete"
     # =====================
-    # max_data_shape = [('data', (config.TRAIN.BATCH_IMAGES, 3, max([v[0] + 8 for v in config.SCALES]), max([v[1] + 38 for v in config.SCALES]))), ('data2', (config.TRAIN.BATCH_IMAGES, 3, max([v[0] + 8 for v in config.SCALES]), max([v[1] + 38 for v in config.SCALES])))]
-    # max_data_shape, max_label_shape = train_data.infer_shape(max_data_shape)
-    # max_data_shape.append(('gt_boxes', (config.TRAIN.BATCH_SIZE, 100, 5)))
-    # print 'providing maximum shape', max_data_shape, max_label_shape
-
-    # =====================
     # infer max shape
     if config.TRAIN.CROP == 'origin':
         max_data_shape = [('data', (input_batch_size, 3, max([v[0] for v in config.SCALES]), max([v[1] for v in config.SCALES]))),('data2', (input_batch_size, 3, max([v[0] for v in config.SCALES]), max([v[1] for v in config.SCALES])))]
-        # max_data_shape = [('data', (input_batch_size, 3, \
-        #                             max([v[0] + 8 for v in config.SCALES]), \
-        #                             max([v[1] + 38 for v in config.SCALES]))), \
-        #                   ('data2', (input_batch_size, 3, \
-        #                             max([v[0] + 8 for v in config.SCALES]), \
-        #                             max([v[1] + 38 for v in config.SCALES])))]
+
         max_data_shape, max_label_shape = train_data.infer_shape(max_data_shape)
         max_data_shape.append(('gt_boxes', (input_batch_size, 100, 5)))
         print 'providing maximum shape', max_data_shape, max_label_shape
@@ -136,27 +107,7 @@ def train_net(args, ctx, pretrained, epoch, prefix, begin_epoch, end_epoch,
         arg_params, aux_params = load_param(prefix, begin_epoch, convert=True)
     else:
         arg_params, aux_params = load_param(pretrained, epoch, convert=True)
-    # initialize params
-        
-        # arg_params['conv5_1_weight'] = mx.random.normal(0, 0.01, shape=arg_shape_dict['conv5_1_weight'])
-        # arg_params['conv5_1_bias'] = mx.nd.zeros(shape=arg_shape_dict['conv5_1_bias'])
-        # arg_params['conv5_2_weight'] = mx.random.normal(0, 0.01, shape=arg_shape_dict['conv5_2_weight'])
-        # arg_params['conv5_2_bias'] = mx.nd.zeros(shape=arg_shape_dict['conv5_2_bias'])
-        # arg_params['conv5_3_weight'] = mx.random.normal(0, 0.01, shape=arg_shape_dict['conv5_3_weight'])
-        # arg_params['conv5_3_bias'] = mx.nd.zeros(shape=arg_shape_dict['conv5_3_bias'])
-        # arg_params['stereo_scale_weight'] = mx.nd.zeros(shape=arg_shape_dict['stereo_scale_weight'])
-        # arg_params['stereo_scale_bias'] = mx.nd.ones(shape=arg_shape_dict['stereo_scale_bias'])
-        # arg_params['rpn_conv_3x3_weight'] = mx.random.normal(0, 0.01, shape=arg_shape_dict['rpn_conv_3x3_weight'])
-        # arg_params['rpn_conv_3x3_bias'] = mx.nd.zeros(shape=arg_shape_dict['rpn_conv_3x3_bias'])
-        # arg_params['rpn_cls_score_weight'] = mx.random.normal(0, 0.01, shape=arg_shape_dict['rpn_cls_score_weight'])
-        # arg_params['rpn_cls_score_bias'] = mx.nd.zeros(shape=arg_shape_dict['rpn_cls_score_bias'])
-        # arg_params['rpn_bbox_pred_weight'] = mx.random.normal(0, 0.01, shape=arg_shape_dict['rpn_bbox_pred_weight'])
-        # arg_params['rpn_bbox_pred_bias'] = mx.nd.zeros(shape=arg_shape_dict['rpn_bbox_pred_bias'])
-        # arg_params['cls_score_weight'] = mx.random.normal(0, 0.01, shape=arg_shape_dict['cls_score_weight'])
-        # arg_params['cls_score_bias'] = mx.nd.zeros(shape=arg_shape_dict['cls_score_bias'])
-        # arg_params['bbox_pred_weight'] = mx.random.normal(0, 0.001, shape=arg_shape_dict['bbox_pred_weight'])
-        # arg_params['bbox_pred_bias'] = mx.nd.zeros(shape=arg_shape_dict['bbox_pred_bias'])
-        #
+        # initialize params
 
         init = mx.init.Xavier(factor_type="in", rnd_type='gaussian', magnitude=2)
         for k in sym.list_arguments():
@@ -226,6 +177,7 @@ def train_net(args, ctx, pretrained, epoch, prefix, begin_epoch, end_epoch,
     base_lr = lr
     lr_factor = 0.1
     lr_epoch = [int(epoch) for epoch in lr_step.split(',')]
+    print epoch, begin_epoch
     lr_epoch_diff = [epoch - begin_epoch for epoch in lr_epoch if epoch > begin_epoch]
     lr = base_lr * (lr_factor ** (len(lr_epoch) - len(lr_epoch_diff)))
     lr_iters = [int(epoch * len(roidb) / batch_size) for epoch in lr_epoch_diff]

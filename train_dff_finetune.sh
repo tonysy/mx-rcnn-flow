@@ -1,1 +1,1 @@
-python train_end2end_dff_finetune.py --dataset Kitti --gpu 6,7 --image_set train --dataset_path data/kitti --prefix model/e2e-fix-flow-manual-init-finetune --end_epoch 20 --pretrained model/e2e-fix-flow-manual-init --pretrained_epoch 10 --lr 0.0000006 --finetune
+python train_end2end_dff_finetune.py --dataset Kitti --gpu 6,7 --image_set train --dataset_path data/kitti --prefix model/e2e-fix-flow-anchorloader-finetune --end_epoch 20 --pretrained model/e2e-fix-flow-anchorloader --pretrained_epoch 9 --lr 0.0000005 --finetune
