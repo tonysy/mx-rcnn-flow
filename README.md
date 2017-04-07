@@ -68,6 +68,12 @@ cyclist |	0.529568454545	| 0.317203 |	0.313888272727
 
 1. Epoch 10
 
+kitti | easy | medium | hard
+:---: | :---: | :----: | :---:
+car 	| 0.796542363636	| 0.638948727273	| 0.555344363636
+pedestrian 	| 0.496717818182	| 0.414531636364	| 0.401392
+cyclist 	| 0.532543363636	| 0.317411909091	| 0.316632636364
+
 
 ## Structure
 This repository provides Faster R-CNN as a package named `rcnn`.

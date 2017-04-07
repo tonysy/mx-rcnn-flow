@@ -129,11 +129,11 @@ def train_net(args, ctx, pretrained, epoch, prefix, begin_epoch, end_epoch,
                 aux_params[k] = mx.nd.zeros(shape=aux_shape_dict[k])
                 init(k, aux_params[k])
 
-    # load flownet parameter and merge with rcnn's
-    flow_model_path = '/data/syzhang/model/flow/flow'
-    _, flow_arg_params, flow_aux_params = mx.model.load_checkpoint(flow_model_path, 0)
-    arg_params.update(flow_arg_params) # dict.update(dict2) add dict2 into dict
-    aux_params.update(flow_aux_params)
+        # load flownet parameter and merge with rcnn's
+        flow_model_path = '/data/syzhang/model/flow/flow'
+        _, flow_arg_params, flow_aux_params = mx.model.load_checkpoint(flow_model_path, 0)
+        arg_params.update(flow_arg_params) # dict.update(dict2) add dict2 into dict
+        aux_params.update(flow_aux_params)
 
     # check parameter shapes
     for k in sym.list_arguments():

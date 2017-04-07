@@ -12,8 +12,8 @@ config.FLOW_SCALE_FACTOR = 0.00390625 # 0.00392156
 # network related params
 config.PIXEL_MEANS = np.array([103.939, 116.779, 123.68])
 config.IMAGE_STRIDE = 64
-config.RPN_FEAT_STRIDE = 16
-config.RCNN_FEAT_STRIDE = 16
+config.RPN_FEAT_STRIDE = 16 # 8
+config.RCNN_FEAT_STRIDE = 16 # 2
 config.FIXED_PARAMS = ['conv1', 'conv2']
 config.FIXED_PARAMS_SHARED = ['conv1', 'conv2', 'conv3', 'conv4', 'conv5']
 
@@ -142,7 +142,7 @@ default.kvstore = 'device'
 default.e2e_prefix = 'model/e2e'
 default.e2e_epoch = 10
 default.e2e_lr = default.base_lr
-default.e2e_lr_step = '7'
+default.e2e_lr_step = '7,14,21'
 # default rpn
 default.rpn_prefix = 'model/rpn'
 default.rpn_epoch = 8
