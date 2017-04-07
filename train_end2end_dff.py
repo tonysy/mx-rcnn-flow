@@ -149,7 +149,11 @@ def train_net(args, ctx, pretrained, epoch, prefix, begin_epoch, end_epoch,
 
     # create solver
     fixed_param_prefix = config.FIXED_PARAMS
-    fixed_param_prefix += flow_arg_params.keys() + flow_aux_params.keys()
+    if args.fix_flow:
+        print "Use fix flownet mode to train"
+        fixed_param_prefix += flow_arg_params.keys() + flow_aux_params.keys()
+    else:
+        print "Flownet non-fixed"
 
     data_names = [k[0] for k in train_data.provide_data]
     label_names = [k[0] for k in train_data.provide_label]
@@ -224,6 +228,7 @@ def parse_args():
     parser.add_argument('--end_epoch', help='end epoch of training', default=default.e2e_epoch, type=int)
     parser.add_argument('--lr', help='base learning rate', default=default.e2e_lr, type=float)
     parser.add_argument('--lr_step', help='learning rate steps (in epoch)', default=default.e2e_lr_step, type=str)
+    parser.add_argument('--fix_flow', help='whether fix flownet', action='store_true')
     args = parser.parse_args()
     return args
 
