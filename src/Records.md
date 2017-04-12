@@ -64,6 +64,7 @@ car 	| 0.796542363636	| 0.638948727273	| 0.555344363636
 pedestrian 	| 0.496717818182	| 0.414531636364	| 0.401392
 cyclist 	| 0.532543363636	| 0.317411909091	| 0.316632636364
 
+### 4. Finetuning RCNN-DFF-non-fix-flow
 #### Method:
 - Finetuning(use prev frame) on pre-trained(use next frame) model
 - Use `mx.symbol.GridGenerator` and `mx.symbol.BilinearSampler`
