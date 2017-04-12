@@ -3,7 +3,7 @@ from easydict import EasyDict as edict
 
 config = edict()
 
-config.RAWDATA_PAHT = '/home/syzhang/titan6/zhicheng/kitti_rawdata'
+config.RAWDATA_PAHT = '/data/syzhang/kitti_rawdata'
 config.RAND_FILE = './devkit_object/mapping/train_rand.txt'
 config.MAP_FILE = './devkit_object/mapping/train_mapping.txt'
 
@@ -142,7 +142,7 @@ default.kvstore = 'device'
 default.e2e_prefix = 'model/e2e'
 default.e2e_epoch = 10
 default.e2e_lr = default.base_lr
-default.e2e_lr_step = '7,14,21'
+default.e2e_lr_step = '7, 14, 21, 28, 35'
 # default rpn
 default.rpn_prefix = 'model/rpn'
 default.rpn_epoch = 8
