@@ -6,6 +6,7 @@ config = edict()
 config.RAWDATA_PAHT = '/data/syzhang/kitti_rawdata'
 config.RAND_FILE = './devkit_object/mapping/train_rand.txt'
 config.MAP_FILE = './devkit_object/mapping/train_mapping.txt'
+config.SHARE_PARAMS_LIST = ['share1_weight', 'share1_bias', 'share2_weight', 'share2_bias', 'share3_weight', 'share3_bias', 'conv_redir_weight', 'conv_redir_bias', 'conv3a_weight', 'conv3a_bias', 'conv3b_weight', 'conv3b_bias', 'conv4a_weight', 'conv4a_bias', 'conv4b_weight', 'conv4b_bias', 'conv5a_weight', 'conv5a_bias', 'conv5b_weight', 'conv5b_bias', 'conv6a_weight', 'conv6a_bias', 'conv6b_weight', 'conv6b_bias', 'upconv5_weight', 'pr6_weight', 'pr6_bias', 'upsample_pr6to5_weight', 'iconv5_weight', 'iconv5_bias', 'upconv4_weight', 'pr5_weight', 'pr5_bias', 'upsample_pr5to4_weight', 'iconv4_weight', 'iconv4_bias', 'upconv3_weight', 'pr4_weight', 'pr4_bias', 'upsample_pr4to3_weight', 'iconv3_weight', 'iconv3_bias', 'upconv2_weight', 'pr3_weight', 'pr3_bias', 'upsample_pr3to2_weight', 'iconv2_weight', 'iconv2_bias', 'upconv1_weight', 'pr2_weight', 'pr2_bias', 'upsample_pr2to1_weight', 'iconv1_weight', 'iconv1_bias', 'pr1_weight', 'pr1_bias', 'stereo_scale_weight', 'stereo_scale_bias']
 
 config.FLOW_SCALE_FACTOR = 0.00390625 # 0.00392156
 
