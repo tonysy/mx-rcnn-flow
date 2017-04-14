@@ -142,7 +142,7 @@ default.kvstore = 'device'
 default.e2e_prefix = 'model/e2e'
 default.e2e_epoch = 10
 default.e2e_lr = default.base_lr
-default.e2e_lr_step = '7, 14, 21, 28, 35'
+default.e2e_lr_step = '7'
 # default rpn
 default.rpn_prefix = 'model/rpn'
 default.rpn_epoch = 8

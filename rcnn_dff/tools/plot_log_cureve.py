@@ -49,7 +49,7 @@ def plot_curve(metric, log_file):
     # ax = plt.subplot(1,1,1)
 
     metric_list = ["LogLoss", 'L1Loss']
-    ylimm_list = [0.06, 1.0]
+    ylimm_list = [0.02, 1.0]
     linestyle_list = ['-', '--']
     for i, item in enumerate(metric_list):
         log_rpn, log_rcnn, idx, metric_name = log_parse(item, log_file)

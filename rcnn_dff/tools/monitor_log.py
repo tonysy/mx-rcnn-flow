@@ -29,8 +29,8 @@ def plot_curve(metric, log_file):
     # ax = plt.subplot(1,1,1)
 
     metric_list = ["LogLoss", 'L1Loss']
-    ylimm_list = [0.1, 1.2]
-    y_size_list = [0.005, 0.1]
+    ylimm_list = [1.2, 1.2]
+    y_size_list = [0.1, 0.1]
     linestyle_list = ['-', '--']
     for i, item in enumerate(metric_list):
         log_rpn, log_rcnn, idx, metric_name = log_parse(item, log_file)
