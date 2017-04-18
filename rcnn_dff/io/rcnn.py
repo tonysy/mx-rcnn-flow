@@ -48,6 +48,29 @@ def get_rcnn_testbatch(roidb):
     return data, label, im_info
 
 
+def get_rcnn_testbatch_ffa(roidb):
+    """
+    return a dict of testbatch
+    :param roidb: ['image', 'flipped'] + ['boxes']
+    :return: data, label, im_info
+    """
+    assert len(roidb) == 1, 'Single batch only'
+    imgs,imgs_nearby, roidb = get_image(roidb)
+    im_array = imgs[0]
+    im_info = np.array([roidb[0]['im_info']], dtype=np.float32)
+
+    im_rois = roidb[0]['boxes']
+    rois = im_rois
+    batch_index = 0 * np.ones((rois.shape[0], 1))
+    rois_array = np.hstack((batch_index, rois))[np.newaxis, :]
+
+    data = {'data': im_array,
+            'rois': rois_array}
+    label = {}
+
+    return data, label, im_info
+
+
 def get_rcnn_batch(roidb):
     """
     return a dict of multiple images
@@ -115,6 +138,72 @@ def get_rcnn_batch(roidb):
 
     return data, label
 
+def get_rcnn_batch_ffa(roidb):
+    """
+    return a dict of multiple images
+    :param roidb: a list of dict, whose length controls batch size
+    ['images', 'flipped'] + ['gt_boxes', 'boxes', 'gt_overlap'] => ['bbox_targets']
+    :return: data, label
+    """
+    num_images = len(roidb)
+    imgs, imgs_nearby, roidb = get_image(roidb, crop=config.TRAIN.CROP)
+    im_array = tensor_vstack(imgs)
+
+    assert config.TRAIN.BATCH_ROIS % config.TRAIN.BATCH_IMAGES == 0, \
+        'BATCHIMAGES {} must divide BATCH_ROIS {}'.format(config.TRAIN.BATCH_IMAGES, config.TRAIN.BATCH_ROIS)
+    rois_per_image = config.TRAIN.BATCH_ROIS / config.TRAIN.BATCH_IMAGES
+    fg_rois_per_image = np.round(config.TRAIN.FG_FRACTION * rois_per_image).astype(int)
+
+    rois_array = list()
+    labels_array = list()
+    bbox_targets_array = list()
+    bbox_weights_array = list()
+
+    for im_i in range(num_images):
+        roi_rec = roidb[im_i]
+
+        # infer num_classes from gt_overlaps
+        num_classes = roi_rec['gt_overlaps'].shape[1]
+
+        # label = class RoI has max overlap with
+        rois = roi_rec['boxes']
+        labels = roi_rec['max_classes']
+        overlaps = roi_rec['max_overlaps']
+        bbox_targets = roi_rec['bbox_targets']
+
+        if config.TRAIN.RCNN_OHEM:
+            im_rois, labels, bbox_targets, bbox_weights = \
+                get_rois(rois, config.TRAIN.RCNN_OHEM_ROIS, num_classes,
+                         labels, overlaps, bbox_targets)
+        else:
+            im_rois, labels, bbox_targets, bbox_weights = \
+                sample_rois(rois, fg_rois_per_image, rois_per_image, num_classes,
+                            labels, overlaps, bbox_targets)
+
+        # project im_rois
+        # do not round roi
+        rois = im_rois
+        batch_index = im_i * np.ones((rois.shape[0], 1))
+        rois_array_this_image = np.hstack((batch_index, rois))
+        rois_array.append(rois_array_this_image)
+
+        # add labels
+        labels_array.append(labels)
+        bbox_targets_array.append(bbox_targets)
+        bbox_weights_array.append(bbox_weights)
+
+    rois_array = np.array(rois_array)
+    labels_array = np.array(labels_array)
+    bbox_targets_array = np.array(bbox_targets_array)
+    bbox_weights_array = np.array(bbox_weights_array)
+
+    data = {'data': im_array,
+            'rois': rois_array}
+    label = {'label': labels_array,
+             'bbox_target': bbox_targets_array,
+             'bbox_weight': bbox_weights_array}
+
+    return data, label
 
 def sample_rois(rois, fg_rois_per_image, rois_per_image, num_classes,
                 labels=None, overlaps=None, bbox_targets=None, gt_boxes=None):

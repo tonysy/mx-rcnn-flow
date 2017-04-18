@@ -14,7 +14,7 @@ import numpy as np
 import numpy.random as npr
 
 from ..config import config
-from .image import get_image, tensor_vstack
+from .image import get_image, get_image_ffa, tensor_vstack
 from ..processing.generate_anchor import generate_anchors
 from ..processing.bbox_transform import bbox_overlaps, nonlinear_transform, iou_transform
 if config.RPN_IOU_LOSS:
@@ -42,6 +42,27 @@ def get_rpn_testbatch(roidb):
 
     return data, label, im_info
 
+def get_rpn_testbatch_ffa(roidb):
+    """
+    return a dict of testbatch
+    :param roidb: ['image', 'flipped']
+    :return: data, label, im_info
+    """
+    assert len(roidb) == 1, 'Single batch only'
+    imgs, imgs_nearby, roidb = get_image_ffa(roidb)
+
+    data = {}
+    for key in imgs_nearby.keys():
+        data[key] = imgs_nearby[key][0]
+    im_array = imgs[0]
+    im_info = np.array([roidb[0]['im_info']], dtype=np.float32)
+
+    data['data'] = im_array
+    data['im_info'] = im_info
+
+    label = {}
+
+    return data, label, im_info
 
 def get_rpn_batch(roidb):
     """
@@ -67,6 +88,35 @@ def get_rpn_batch(roidb):
     data = {'data': im_array,
             'data2': im2_array,
             'im_info': im_info}
+    label = {'gt_boxes': gt_boxes}
+
+    return data, label
+def get_rpn_batch_ffa(roidb):
+    """
+    prototype for rpn batch: data, im_info, gt_boxes
+    :param roidb: ['image', 'flipped'] + ['gt_boxes', 'boxes', 'gt_classes']
+    :return: data, label
+    """
+    assert len(roidb) == 1, 'Single batch only'
+    imgs, imgs_nearby, roidb = get_image_ffa(roidb, crop=config.TRAIN.CROP)
+
+    data = {}
+    for key in imgs_nearby.keys():
+        data[key] = imgs_nearby[key][0]
+    im_array = imgs[0]
+    im_info = np.array([roidb[0]['im_info']], dtype=np.float32)
+    data['data'] = im_array
+    data['im_info'] = im_info
+
+    # gt boxes: (x1, y1, x2, y2, cls)
+    if roidb[0]['gt_classes'].size > 0:
+        gt_inds = np.where(roidb[0]['gt_classes'] != 0)[0]
+        gt_boxes = np.empty((roidb[0]['boxes'].shape[0], 5), dtype=np.float32)
+        gt_boxes[:, 0:4] = roidb[0]['boxes'][gt_inds, :]
+        gt_boxes[:, 4] = roidb[0]['gt_classes'][gt_inds]
+    else:
+        gt_boxes = np.empty((0, 5), dtype=np.float32)
+
     label = {'gt_boxes': gt_boxes}
 
     return data, label
