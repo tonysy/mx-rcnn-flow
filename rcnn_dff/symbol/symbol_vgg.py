@@ -1236,3 +1236,6 @@ def get_vgg_train_dff_cycle(num_classes=config.NUM_CLASSES, num_anchors=config.N
 
     group = mx.symbol.Group(rpn_group + rcnn_group)
     return group
+
+def get_vgg_train_ffa(num_classes=config.NUM_CLASSES, num_anchors=config.NUM_ANCHORS):
+    """flow feature aggregation"""

@@ -79,6 +79,30 @@ car  | 0.839839454545 | 0.661167545455 | 0.576057181818
 pedestrian  | 0.581605454545 | 0.429004272727 | 0.416503818182
 cyclist  | 0.510314818182 | 0.305621090909 | 0.301150545455
 
+### 5. Finetuning RCNN-Cycle-Flow
+#### RCNN-Cycle-Flow Structure
+```
+Prev_Image   ------>   Curr_Image
+                           |
+                           |
+                           v
+Prev_Feature <-----  Curr_Feature
+
+Curr_Image   ------>   Prev_Image
+                           |
+                           |
+                           v
+Curr_Feature <-----  Prev_Feature
+```
+
+#### Results
+kitti	| easy	| medium	| hard
+:---: | :---: | :----: | :---:
+car 	| 0.872972	| 0.751366636364 | 	0.602904090909
+pedestrian 	| 0.583609090909 | 	0.501473727273 | 	0.420809636364
+cyclist 	| 0.574077454545	| 0.393106181818	| 0.334247727273
+
+
 ## References
 1. Shaoqing Ren, Kaiming He, Ross Girshick, and Jian Sun. "Faster R-CNN: Towards real-time object detection with region proposal networks." In Advances in Neural Information Processing Systems, 2015.
 2. Karen Simonyan, and Andrew Zisserman. "Very deep convolutional networks for large-scale image recognition." arXiv preprint arXiv:1409.1556 (2014).
