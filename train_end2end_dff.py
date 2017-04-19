@@ -12,7 +12,7 @@ import numpy as np
 from rcnn_dff.config import config, default, generate_config
 from rcnn_dff.symbol import *
 from rcnn_dff.core import callback, metric
-from rcnn_dff.core.loader import AnchorLoader
+from rcnn_dff.core.loader import AnchorLoader, AnchorLoaderFFA
 from rcnn_dff.core.module import MutableModule
 from rcnn_dff.utils.load_data import load_gt_roidb, merge_roidb, filter_roidb
 from rcnn_dff.utils.load_model import load_param
@@ -49,7 +49,7 @@ def train_net(args, ctx, pretrained, epoch, prefix, begin_epoch, end_epoch,
 
     # load symbol
     # use vgg_dff symbol
-    sym = eval('get_' + args.network + '_train_dff')(num_classes=config.NUM_CLASSES, num_anchors=config.NUM_ANCHORS)
+    sym = eval('get_' + args.network + '_train_ffa')(num_classes=config.NUM_CLASSES, num_anchors=config.NUM_ANCHORS)
     feat_sym = sym.get_internals()['rpn_cls_score_output']
     print "========symbol load"
 
@@ -73,7 +73,7 @@ def train_net(args, ctx, pretrained, epoch, prefix, begin_epoch, end_epoch,
     print "========roidb load"
 
     # load training data
-    train_data = AnchorLoader(feat_sym, roidb, batch_size=input_batch_size, shuffle=not args.no_shuffle,
+    train_data = AnchorLoaderFFA(feat_sym, roidb, batch_size=input_batch_size, shuffle=not args.no_shuffle,
                               ctx=ctx, work_load_list=args.work_load_list,
                               feat_stride=config.RPN_FEAT_STRIDE, anchor_scales=config.ANCHOR_SCALES,
                               anchor_ratios=config.ANCHOR_RATIOS, aspect_grouping=config.TRAIN.ASPECT_GROUPING)

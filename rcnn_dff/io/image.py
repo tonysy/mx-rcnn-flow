@@ -508,7 +508,7 @@ def get_image_ffa(roidb, crop='origin'):
                     else:
                         im_temp = cv2.imread(twin_path)
                         if roidb[i]['flipped']:
-                            im_temp = [:, ::-1, :]
+                            im_temp = im_temp[:, ::-1, :]
                         im_temp, _ = resize(im_temp, target_size, max_size, stride=config.IMAGE_STRIDE)
                         im_temp_tensor = transform(im_temp, config.PIXEL_MEANS)
                         processed_ims_nearby['prev_{}'.format(m+1)].append(im_temp_tensor)
@@ -521,7 +521,7 @@ def get_image_ffa(roidb, crop='origin'):
                     else:
                         im_temp = cv2.imread(twin_path)
                         if roidb[i]['flipped']:
-                            im_temp = [:, ::-1, :]
+                            im_temp = im_temp[:, ::-1, :]
                         im_temp, _ = resize(im_temp, target_size, max_size, stride=config.IMAGE_STRIDE)
                         im_temp_tensor = transform(im_temp, config.PIXEL_MEANS)
                         processed_ims_nearby['next_{}'.format(m+1)].append(im_temp_tensor)
@@ -536,7 +536,7 @@ def get_image_ffa(roidb, crop='origin'):
                     bbox_targets[:, 1:] *= im_scale
                     new_rec['bbox_targets'] = bbox_targets
             processed_roidb.append(new_rec)
-            
+
     return processed_ims,processed_ims_nearby, processed_roidb
 
 def resize(im, target_size, max_size, stride=0):

@@ -1,4 +1,5 @@
 import mxnet as mx
+from collections import OrderedDict
 import proposal
 import proposal_target
 import rcnn_iou_loss
@@ -1255,7 +1256,7 @@ def get_embedding_weight(feature_input,embedding_param_dic):
 
 def get_feature_aggregation(relu5_3_dict):
     embedding_param_variable_list = [mx.sym.Variable(item) for item in config.EMBEDDING_PARAMS_LIST]
-    embedding_param_dic = dict(zip(config.EMBEDDING_PARAMS_LIST, mbedding_param_variable_list))
+    embedding_param_dic = dict(zip(config.EMBEDDING_PARAMS_LIST, embedding_param_variable_list))
     print embedding_param_dic
 
     embedding_dict = relu5_3_dict
@@ -1270,18 +1271,24 @@ def get_feature_aggregation(relu5_3_dict):
         curr_feature = embedding_dict[item]
         dot_product = mx.symbol.dot(curr_feature, ref_feature)
         l2_product = mx.symbol.L2Normalization(data=curr_feature) * ref_l2norm
-        score_dict[item] = dot_product / l2_product
-    print score_dict.keys()
+        score_dict[item] = mx.symbol.exp(dot_product / l2_product)
 
-    sorted_score_dict = sorted(score_dict.items, key=lambda item_temp:item_temp[0])
-    softmax_input = sorted_score_dict.values()
-    softmax_output = mx.symbol.SoftmaxActivation(data=softmax_input)
+    weight_dict = {}
+    for item in score_dict.keys():
+        weight_dict[item] = score_dict[item] / sum(score_dict.values())
 
-    weight_dict = dict(zip(sorted_score_dict.keys(), softmax_output))
 
+    # sorted_score_dict = OrderedDict(sorted(score_dict.items(), key=lambda item_temp:item_temp[0]))
+    # print "dict",sorted_score_dict
+    # softmax_input = sorted_score_dict.values()
+    # softmax_output = mx.symbol.SoftmaxActivation(data=softmax_input, mode="channel")
+    #
+    # weight_dict = dict(zip(sorted_score_dict.keys(), softmax_output))
+
+    print weight_dict
     relu5_3 = relu5_3_dict['data']
     for item in weight_dict.keys():
-        relu += weight_dict[item] * relu5_3_dict[item]
+        relu5_3 += weight_dict[item] * relu5_3_dict[item]
     relu5_3 -= relu5_3_dict['data']
 
     return relu5_3
@@ -1300,7 +1307,9 @@ def get_vgg_train_ffa(num_classes=config.NUM_CLASSES, num_anchors=config.NUM_ANC
         data_dict['prev_{}'.format(i+1)] = mx.symbol.Variable(name='prev_{}'.format(i+1))
         data_dict['next_{}'.format(i+1)] = mx.symbol.Variable(name='next_{}'.format(i+1))
     data_dict['data'] = mx.symbol.Variable(name="data")
+    data = data_dict['data']
 
+    print data_dict
     im_info = mx.symbol.Variable(name="im_info")
     gt_boxes = mx.symbol.Variable(name="gt_boxes")
     rpn_label = mx.symbol.Variable(name='label')
@@ -1312,8 +1321,9 @@ def get_vgg_train_ffa(num_classes=config.NUM_CLASSES, num_anchors=config.NUM_ANC
     relu5_3_ref = get_vgg_dilate_conv(data_dict['data'])
     relu5_3_dict = data_dict
     del relu5_3_dict['data']
+    print relu5_3_dict.keys()
     for item in relu5_3_dict.keys():
-        relu5_3_dict[item], _, _ = feature_propagate(relu5_3_ref, data_dict[item], data_dict['data'])
+        relu5_3_dict[item], _, _ = feature_propagate(relu5_3_ref, data_dict[item], data)
     relu5_3_dict['data'] = relu5_3_ref
 
     relu5_3 = get_feature_aggregation(relu5_3_dict)

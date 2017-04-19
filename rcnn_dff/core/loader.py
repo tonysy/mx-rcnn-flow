@@ -413,7 +413,7 @@ class AnchorLoaderFFA(mx.io.DataIter):
         :param aspect_grouping: group images with similar aspects
         :return: AnchorLoader
         """
-        super(AnchorLoader, self).__init__()
+        super(AnchorLoaderFFA, self).__init__()
 
         # save parameters as properties
         self.feat_sym = feat_sym
@@ -438,8 +438,8 @@ class AnchorLoaderFFA(mx.io.DataIter):
         if config.TRAIN.END2END:
             self.data_name = ['data', 'im_info', 'gt_boxes']
             for i in range(config.FRAMES_FEATURE_AGGREGATION):
-                self.data_name.append['prev_{}'.format(i+1)]
-                self.data_name.append['next_{}'.format(i+1)]
+                self.data_name.append('prev_{}'.format(i+1))
+                self.data_name.append('next_{}'.format(i+1))
         else:
             self.data_name = ['data']
         self.label_name = ['label', 'bbox_target', 'bbox_weight']
