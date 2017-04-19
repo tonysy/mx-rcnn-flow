@@ -69,7 +69,6 @@ def get_vgg_conv(data):
 
     return relu5_3
 
-
 def get_vgg_rcnn(num_classes=config.NUM_CLASSES):
     """
     Fast R-CNN with VGG 16 conv layers
@@ -1237,11 +1236,59 @@ def get_vgg_train_dff_cycle(num_classes=config.NUM_CLASSES, num_anchors=config.N
     group = mx.symbol.Group(rpn_group + rcnn_group)
     return group
 
+def get_embedding_weight(feature_input,embedding_param_dic):
+    embedding_conv1 = mx.symbol.Convolution(data=feature_input, kernel=(1, 1), \
+                        pad=(0, 0), num_filter=512, name="embedding_conv1",\
+                        weight=embedding_param_dic['embedding_conv1_weight'],\
+                        bias=embedding_param_dic['embedding_conv1_bias'])
+    embedding_conv2 = mx.symbol.Convolution(data=embedding_conv1, kernel=(1, 1),\
+                        pad=(1, 1), num_filter=512, name="embedding_conv2",\
+                        weight=embedding_param_dic['embedding_conv2_weight'],\
+                        bias=embedding_param_dic['embedding_conv2_bias'])
+    embedding_conv3 = mx.symbol.Convolution(data=embedding_conv2, kernel=(1, 1),\
+                        pad=(0, 0), num_filter=512, name="embedding_conv3",\
+                        weight=embedding_param_dic['embedding_conv1_weight'],\
+                        bias=embedding_param_dic['embedding_conv1_bias'])
+
+    embedding_flatten = mx.symbol.Flatten(data=embedding_conv3, name='embedding_flatten')
+    return embedding_flatten
+
+def get_feature_aggregation(relu5_3_dict):
+    embedding_param_variable_list = [mx.sym.Variable(item) for item in config.EMBEDDING_PARAMS_LIST]
+    embedding_param_dic = dict(zip(config.EMBEDDING_PARAMS_LIST, mbedding_param_variable_list))
+    print embedding_param_dic
+
+    embedding_dict = relu5_3_dict
+    for item in embedding_dict.keys():
+        embedding_dict[item] = get_embedding_weight(relu5_3_dict[item],embedding_param_dic)
+
+    ref_feature = embedding_dict['data']
+    ref_l2norm = mx.symbol.L2Normalization(data=ref_feature)
+
+    score_dict = embedding_dict
+    for item in score_dict.keys():
+        curr_feature = embedding_dict[item]
+        dot_product = mx.symbol.dot(curr_feature, ref_feature)
+        l2_product = mx.symbol.L2Normalization(data=curr_feature) * ref_l2norm
+        score_dict[item] = dot_product / l2_product
+    print score_dict.keys()
+
+    sorted_score_dict = sorted(score_dict.items, key=lambda item_temp:item_temp[0])
+    softmax_input = sorted_score_dict.values()
+    softmax_output = mx.symbol.SoftmaxActivation(data=softmax_input)
+
+    weight_dict = dict(zip(sorted_score_dict.keys(), softmax_output))
+
+    relu5_3 = relu5_3_dict['data']
+    for item in weight_dict.keys():
+        relu += weight_dict[item] * relu5_3_dict[item]
+    relu5_3 -= relu5_3_dict['data']
+
+    return relu5_3
 
 def get_vgg_train_ffa(num_classes=config.NUM_CLASSES, num_anchors=config.NUM_ANCHORS):
     """
-    flow feature aggregation
-
+    Flow Feature Aggregation
     Faster R-CNN end-to-end with VGG 16 conv layers
     Edited for deep feature flow, use flownet warp feature
     :param num_classes: used to determine output size
@@ -1264,33 +1311,14 @@ def get_vgg_train_ffa(num_classes=config.NUM_CLASSES, num_anchors=config.NUM_ANC
     # relu5_3 = get_vgg_conv(data)
     relu5_3_ref = get_vgg_dilate_conv(data_dict['data'])
     relu5_3_dict = data_dict
-    del relu5_3_ref['data']
-
+    del relu5_3_dict['data']
     for item in relu5_3_dict.keys():
         relu5_3_dict[item], _, _ = feature_propagate(relu5_3_ref, data_dict[item], data_dict['data'])
+    relu5_3_dict['data'] = relu5_3_ref
 
-    relu5_3_list = relu5_3_dict.values()
-    relu5_3 = sum(relu5_3_list) + relu5_3_ref
-
-    # relu5_3 = get_vgg_dilate_conv(data2)
-    # relu5_3, _, _ = feature_propagate(relu5_3, data, data2)
-
-    # flownet = stereo_scale_net(data*config.FLOW_SCALE_FACTOR, \
-    #                            data2*config.FLOW_SCALE_FACTOR,\
-    #                            net_type='flow')
-    # flow = flownet[0]
-    # scale = flownet[1]
-    # scale_avg = mx.sym.Pooling(data=scale*0.125, pool_type='avg',\
-    #                            kernel=(8,8),stride=(8,8),name="scale_avg")
-    # flow_avg = mx.sym.Pooling(data=flow*0.125, pool_type='avg',\
-    #                            kernel=(8,8),stride=(8,8),name="flow_avg")
-    #
-    # flow_grid = mx.symbol.GridGenerator(data=flow_avg,transform_type='warp',\
-    #                                     name='flow_grid')
-    # warp_res = mx.symbol.BilinearSampler(data=relu5_3,grid=flow_grid,\
-    #                                      name='warp_res')
-    #
-    # relu5_3 = warp_res * scale_avg
+    relu5_3 = get_feature_aggregation(relu5_3_dict)
+    # relu5_3_list = relu5_3_dict.values()
+    # relu5_3 = sum(relu5_3_list) + relu5_3_ref
 
     # RPN layers
     rpn_conv = mx.symbol.Convolution(
