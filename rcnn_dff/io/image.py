@@ -297,6 +297,7 @@ def get_image_ffa(roidb, crop='origin'):
     processed_ims = []
 
     if config.FRAMES_FEATURE_AGGREGATION > 0:
+        print "create processed_ims_nearby dict"
         processed_ims_nearby = {}
         for i in range(config.FRAMES_FEATURE_AGGREGATION):
             processed_ims_nearby['prev_{}'.format(i+1)] = []
@@ -498,7 +499,8 @@ def get_image_ffa(roidb, crop='origin'):
             processed_ims.append(im_tensor)
 
             if config.FRAMES_FEATURE_AGGREGATION > 0:
-                processed_ims_nearby = {}
+                #processed_ims_nearby = {}
+
                 # prev frames
                 for m in range(config.FRAMES_FEATURE_AGGREGATION):
                     twin_path = get_twin_path_ffa(roi_rec, rand_map, img_map,frame_index=-(m+1))

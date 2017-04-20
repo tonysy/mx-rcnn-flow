@@ -107,7 +107,7 @@ def get_rpn_batch_ffa(roidb):
     im_info = np.array([roidb[0]['im_info']], dtype=np.float32)
     data['data'] = im_array
     data['im_info'] = im_info
-
+    print data.keys()
     # gt boxes: (x1, y1, x2, y2, cls)
     if roidb[0]['gt_classes'].size > 0:
         gt_inds = np.where(roidb[0]['gt_classes'] != 0)[0]

@@ -1248,8 +1248,8 @@ def get_embedding_weight(feature_input,embedding_param_dic):
                         bias=embedding_param_dic['embedding_conv2_bias'])
     embedding_conv3 = mx.symbol.Convolution(data=embedding_conv2, kernel=(1, 1),\
                         pad=(0, 0), num_filter=512, name="embedding_conv3",\
-                        weight=embedding_param_dic['embedding_conv1_weight'],\
-                        bias=embedding_param_dic['embedding_conv1_bias'])
+                        weight=embedding_param_dic['embedding_conv3_weight'],\
+                        bias=embedding_param_dic['embedding_conv3_bias'])
 
     embedding_flatten = mx.symbol.Flatten(data=embedding_conv3, name='embedding_flatten')
     return embedding_flatten
@@ -1257,21 +1257,21 @@ def get_embedding_weight(feature_input,embedding_param_dic):
 def get_feature_aggregation(relu5_3_dict):
     embedding_param_variable_list = [mx.sym.Variable(item) for item in config.EMBEDDING_PARAMS_LIST]
     embedding_param_dic = dict(zip(config.EMBEDDING_PARAMS_LIST, embedding_param_variable_list))
-    print embedding_param_dic
 
-    embedding_dict = relu5_3_dict
-    for item in embedding_dict.keys():
+    embedding_dict = {}
+    for item in relu5_3_dict.keys():
         embedding_dict[item] = get_embedding_weight(relu5_3_dict[item],embedding_param_dic)
 
     ref_feature = embedding_dict['data']
-    ref_l2norm = mx.symbol.L2Normalization(data=ref_feature)
-
-    score_dict = embedding_dict
-    for item in score_dict.keys():
+    ref_l2norm = mx.symbol.norm(data=ref_feature)
+    arg_shape, output_shape, aux_shape = ref_l2norm.infer_shape(data=(1, 3, 384, 1280))
+    print arg_shape, output_shape, aux_shape
+    score_dict = {}
+    for item in embedding_dict.keys():
         curr_feature = embedding_dict[item]
-        dot_product = mx.symbol.dot(curr_feature, ref_feature)
-        l2_product = mx.symbol.L2Normalization(data=curr_feature) * ref_l2norm
-        score_dict[item] = mx.symbol.exp(dot_product / l2_product)
+        dot_product = mx.symbol.dot(curr_feature, mx.symbol.transpose(ref_feature))
+        l2_product = mx.symbol.norm(data=curr_feature) * ref_l2norm
+        score_dict[item] = mx.symbol.exp(mx.symbol.Reshape(dot_product,shape=(1,)) / l2_product)
 
     weight_dict = {}
     for item in score_dict.keys():
@@ -1285,9 +1285,13 @@ def get_feature_aggregation(relu5_3_dict):
     #
     # weight_dict = dict(zip(sorted_score_dict.keys(), softmax_output))
 
-    print weight_dict
+    print "weight_dict", weight_dict
     relu5_3 = relu5_3_dict['data']
+    arg_shape, output_shape, aux_shape = relu5_3.infer_shape(data=(1, 3, 384, 1280))
+    print 'weight dict:',arg_shape, output_shape, aux_shape
+    print 'relu5_3', relu5_3
     for item in weight_dict.keys():
+        print 'item', item
         relu5_3 += weight_dict[item] * relu5_3_dict[item]
     relu5_3 -= relu5_3_dict['data']
 
@@ -1307,7 +1311,7 @@ def get_vgg_train_ffa(num_classes=config.NUM_CLASSES, num_anchors=config.NUM_ANC
         data_dict['prev_{}'.format(i+1)] = mx.symbol.Variable(name='prev_{}'.format(i+1))
         data_dict['next_{}'.format(i+1)] = mx.symbol.Variable(name='next_{}'.format(i+1))
     data_dict['data'] = mx.symbol.Variable(name="data")
-    data = data_dict['data']
+    # data = data_dict['data']
 
     print data_dict
     im_info = mx.symbol.Variable(name="im_info")
@@ -1319,11 +1323,11 @@ def get_vgg_train_ffa(num_classes=config.NUM_CLASSES, num_anchors=config.NUM_ANC
     # shared convolutional layers
     # relu5_3 = get_vgg_conv(data)
     relu5_3_ref = get_vgg_dilate_conv(data_dict['data'])
-    relu5_3_dict = data_dict
-    del relu5_3_dict['data']
+    relu5_3_dict = {}
+
     print relu5_3_dict.keys()
     for item in relu5_3_dict.keys():
-        relu5_3_dict[item], _, _ = feature_propagate(relu5_3_ref, data_dict[item], data)
+        relu5_3_dict[item], _, _ = feature_propagate(relu5_3_ref, data_dict[item], data_dict['data'])
     relu5_3_dict['data'] = relu5_3_ref
 
     relu5_3 = get_feature_aggregation(relu5_3_dict)
