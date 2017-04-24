@@ -452,10 +452,9 @@ def feature_propagate(relu5_3, data, data2):
                                          name='warp_res')
 
     relu5_3_ = warp_res * scale_avg
-
     return relu5_3_, flow, flow_avg
 
-def feature_propagate_share(param_dic, relu5_3, data, data2):
+def feature_propagate_share(return_name, param_dic, relu5_3, data, data2):
     flownet = stereo_scale_net_share(data*config.FLOW_SCALE_FACTOR, \
                                data2*config.FLOW_SCALE_FACTOR,\
                                param_dic=param_dic,
@@ -473,7 +472,8 @@ def feature_propagate_share(param_dic, relu5_3, data, data2):
                                          name='warp_res')
 
     relu5_3_ = warp_res * scale_avg
-
+    # relu5_3_ = mx.symbol.broadcast_mul(lhs=warp_res, rhs=scale_avg)
+    # print "+++++++++feature propagate:", relu5_3_.list_arguments()
     return relu5_3_, flow, flow_avg
 
 def feature_warp(relu5_3, data, data2):

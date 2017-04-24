@@ -297,7 +297,7 @@ def get_image_ffa(roidb, crop='origin'):
     processed_ims = []
 
     if config.FRAMES_FEATURE_AGGREGATION > 0:
-        print "create processed_ims_nearby dict"
+        # print "create processed_ims_nearby dict"
         processed_ims_nearby = {}
         for i in range(config.FRAMES_FEATURE_AGGREGATION):
             processed_ims_nearby['prev_{}'.format(i+1)] = []

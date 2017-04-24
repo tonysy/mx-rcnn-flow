@@ -509,10 +509,14 @@ class AnchorLoaderFFA(mx.io.DataIter):
             max_data_shape = []
         if max_label_shape is None:
             max_label_shape = []
+        print "max data shape:", max_data_shape
+        print "max label shape:", max_label_shape
         max_shapes = dict(max_data_shape + max_label_shape)
+        print "max shapes:", max_shapes
         input_batch_size = max_shapes['data'][0]
         im_info = [[max_shapes['data'][2], max_shapes['data'][3], 1.0]]
         print im_info
+        # print **max_shapes
         _, feat_shape, _ = self.feat_sym.infer_shape(**max_shapes)
         label = assign_anchor(feat_shape[0], np.zeros((0, 5)), im_info,
                               self.feat_stride, self.anchor_scales, self.anchor_ratios, self.allowed_border)

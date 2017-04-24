@@ -1263,19 +1263,76 @@ def get_feature_aggregation(relu5_3_dict):
         embedding_dict[item] = get_embedding_weight(relu5_3_dict[item],embedding_param_dic)
 
     ref_feature = embedding_dict['data']
-    ref_l2norm = mx.symbol.norm(data=ref_feature)
-    arg_shape, output_shape, aux_shape = ref_l2norm.infer_shape(data=(1, 3, 384, 1280))
-    print arg_shape, output_shape, aux_shape
+    arg_shape, output_shape, aux_shape = ref_feature.infer_shape(data=(1, 3, 384, 1280))
+    print '####ref_feature:',arg_shape, output_shape, aux_shape
+    # ref_l2norm_vector = mx.symbol.L2Normalization(mx.symbol.Reshape(ref_feature, shape=(-1,)), name='ref_l2norm')
+    ref_length_sqr = mx.symbol.dot(ref_feature ,mx.symbol.Reshape(ref_feature, shape=(-1,)))
+    ref_length = mx.symbol.sqrt(ref_length_sqr)
+
+    arg_shape, output_shape, aux_shape = ref_length.infer_shape(data=(1, 3, 384, 1280))
+    print '####ref_l2norm:',arg_shape, output_shape, aux_shape
+
+
     score_dict = {}
+    dot_product_dict = {}
+    l2_product_dict = {}
     for item in embedding_dict.keys():
+        # print "-----------", item
         curr_feature = embedding_dict[item]
-        dot_product = mx.symbol.dot(curr_feature, mx.symbol.transpose(ref_feature))
-        l2_product = mx.symbol.norm(data=curr_feature) * ref_l2norm
-        score_dict[item] = mx.symbol.exp(mx.symbol.Reshape(dot_product,shape=(1,)) / l2_product)
+        dot_product = mx.symbol.dot(curr_feature, mx.symbol.Reshape(ref_feature,\
+                                                                    shape=(-1,)), \
+                                    name='dot_product_{}'.format(item))
+        dot_product_dict[item] = dot_product
+
+        curr_length_sqr = mx.symbol.dot(curr_feature ,mx.symbol.Reshape(curr_feature, shape=(-1,)))
+        curr_length = mx.symbol.sqrt(curr_length_sqr)
+
+        # l2_product = mx.symbol.Reshape(curr_lengh * ref_length, shape=(1,1))
+        l2_product = curr_length * ref_length
+
+        l2_product_dict[item] = l2_product
+
+        score_dict[item] = mx.symbol.exp(mx.symbol.Reshape(dot_product, shape=(1,))  / mx.symbol.Reshape(l2_product, shape=(1,)), name='score_{}'.format(item))
+    # print score_dict.keys()
+
+    arg_shape, output_shape, aux_shape = dot_product_dict['data'].infer_shape(data=(1, 3, 384, 1280))
+    print '$$$$$dot_product:',arg_shape, output_shape, aux_shape
+    arg_shape, output_shape, aux_shape = l2_product_dict['data'].infer_shape(data=(1, 3, 384, 1280))
+    print '$$$$$l2_product:',arg_shape, output_shape, aux_shape
+
+    arg_shape, output_shape, aux_shape = score_dict['data'].infer_shape(data=(1, 3, 384, 1280))
+    print '$$$$$score_dict:',arg_shape, output_shape, aux_shape
 
     weight_dict = {}
+
+    weight_sum = score_dict['data']
+    print weight_sum.list_outputs()
+    print weight_sum.list_arguments()
+    arg_shape, output_shape, aux_shape = weight_sum.infer_shape(data=(1, 3, 384, 1280))
+    print '$$$$$weight_sum:',arg_shape, output_shape, aux_shape
+
     for item in score_dict.keys():
-        weight_dict[item] = score_dict[item] / sum(score_dict.values())
+        if item != 'data':
+            weight_sum += score_dict[item]
+    print weight_sum.list_outputs()
+    print weight_sum.list_arguments()
+    # weight_temp = mx.symbol.Group(weight_sum)
+    # weight_sum_ = mx.symbol.ElementWiseSum(weight_temp)
+
+    # for item in score_dict.keys():
+    #     if item != 'data':
+    #         weight_sum = mx.symbol.broadcast_add(lhs = weight_sum, rhs = score_dict[item], name = 'weight_sum')
+
+    # print weight_sum_
+    arg_shape, output_shape, aux_shape = weight_sum.infer_shape(data=(1, 3, 384, 1280),prev_1=(1, 3, 384, 1280),prev_2=(1, 3, 384, 1280),next_1=(1, 3, 384, 1280),next_2=(1, 3, 384, 1280))
+    print '$$$$$weight_sum new:',arg_shape, output_shape, aux_shape
+
+    for item in score_dict.keys():
+        weight_dict[item] = score_dict[item] / weight_sum
+
+    arg_shape, output_shape, aux_shape = weight_dict['data'].infer_shape(data=(1, 3, 384, 1280),prev_1=(1, 3, 384, 1280),prev_2=(1, 3, 384, 1280),next_1=(1, 3, 384, 1280),next_2=(1, 3, 384, 1280))
+    print '$$$$$weight_product:',arg_shape, output_shape, aux_shape
+
 
 
     # sorted_score_dict = OrderedDict(sorted(score_dict.items(), key=lambda item_temp:item_temp[0]))
@@ -1285,14 +1342,15 @@ def get_feature_aggregation(relu5_3_dict):
     #
     # weight_dict = dict(zip(sorted_score_dict.keys(), softmax_output))
 
-    print "weight_dict", weight_dict
+    # print "weight_dict", weight_dict
     relu5_3 = relu5_3_dict['data']
     arg_shape, output_shape, aux_shape = relu5_3.infer_shape(data=(1, 3, 384, 1280))
-    print 'weight dict:',arg_shape, output_shape, aux_shape
+    print '$$$$$:',arg_shape, output_shape, aux_shape
     print 'relu5_3', relu5_3
     for item in weight_dict.keys():
-        print 'item', item
-        relu5_3 += weight_dict[item] * relu5_3_dict[item]
+        # print 'item', item
+        relu5_3_temp = mx.symbol.broadcast_mul(lhs=relu5_3_dict[item], rhs=weight_dict[item])
+        relu5_3 += relu5_3_temp
     relu5_3 -= relu5_3_dict['data']
 
     return relu5_3
@@ -1306,6 +1364,9 @@ def get_vgg_train_ffa(num_classes=config.NUM_CLASSES, num_anchors=config.NUM_ANC
     :param num_anchors: used to determine output size
     :return: Symbol
     """
+    param_variable_list = [mx.sym.Variable(item) for item in config.SHARE_PARAMS_LIST]
+    param_dic = dict(zip(config.SHARE_PARAMS_LIST, param_variable_list))
+
     data_dict = {}
     for i in range(config.FRAMES_FEATURE_AGGREGATION):
         data_dict['prev_{}'.format(i+1)] = mx.symbol.Variable(name='prev_{}'.format(i+1))
@@ -1313,7 +1374,6 @@ def get_vgg_train_ffa(num_classes=config.NUM_CLASSES, num_anchors=config.NUM_ANC
     data_dict['data'] = mx.symbol.Variable(name="data")
     # data = data_dict['data']
 
-    print data_dict
     im_info = mx.symbol.Variable(name="im_info")
     gt_boxes = mx.symbol.Variable(name="gt_boxes")
     rpn_label = mx.symbol.Variable(name='label')
@@ -1323,14 +1383,20 @@ def get_vgg_train_ffa(num_classes=config.NUM_CLASSES, num_anchors=config.NUM_ANC
     # shared convolutional layers
     # relu5_3 = get_vgg_conv(data)
     relu5_3_ref = get_vgg_dilate_conv(data_dict['data'])
+    arg_shape, output_shape, aux_shape = relu5_3_ref.infer_shape(data=(1, 3, 384, 1280))
+    print 'aaaaaa relu5_3_ref:',arg_shape, output_shape, aux_shape
+
     relu5_3_dict = {}
 
-    print relu5_3_dict.keys()
-    for item in relu5_3_dict.keys():
-        relu5_3_dict[item], _, _ = feature_propagate(relu5_3_ref, data_dict[item], data_dict['data'])
+    for item in data_dict.keys():
+        # print "#####", data_dict[item].list_arguments()
+        # feature_propagate_share(param_dic, src_feature, data2, data)
+        relu5_3_dict[item], _, _ = feature_propagate_share(item, param_dic, relu5_3_ref, data_dict[item], data_dict['data'])
+        # print "~~~~~~", relu5_3_dict[item].list_arguments()
     relu5_3_dict['data'] = relu5_3_ref
-
+    print "flow flow flow", relu5_3_dict['prev_1'].list_arguments()
     relu5_3 = get_feature_aggregation(relu5_3_dict)
+    print "arguments", relu5_3.list_arguments()
     # relu5_3_list = relu5_3_dict.values()
     # relu5_3 = sum(relu5_3_list) + relu5_3_ref
 
