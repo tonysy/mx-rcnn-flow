@@ -11,6 +11,10 @@ parser.add_argument('--log_file', type=str,default="log_tr_va",
                     help='the path of log file')
 parser.add_argument('--metric', type=str,default="L1Loss",
                     help='the path of log file')
+parser.add_argument('--ylim_log', type=float,default=1.2,
+                    help='the path of log file')
+parser.add_argument('--ylim_l1', type=float,default=1.2,
+                    help='the path of log file')
 
 args = parser.parse_args()
 
@@ -22,6 +26,7 @@ def print_line(txt):
     plot_curve(args.metric, args.log_file)
 
 def plot_curve(metric, log_file):
+    global args
 
     plt.ion()
     plt.clf()
@@ -29,7 +34,7 @@ def plot_curve(metric, log_file):
     # ax = plt.subplot(1,1,1)
 
     metric_list = ["LogLoss", 'L1Loss']
-    ylimm_list = [1.2, 1.2]
+    ylimm_list = [args.ylim_log,args.ylim_l1]
     y_size_list = [0.1, 0.1]
     linestyle_list = ['-', '--']
     for i, item in enumerate(metric_list):
