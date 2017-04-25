@@ -5,7 +5,7 @@ import mxnet as mx
 from ..config import config, default, generate_config
 from ..symbol import *
 from ..dataset import *
-from ..core.loader import TestLoader
+from ..core.loader import TestLoader, TestLoaderFFA
 from ..core.tester import Predictor, pred_eval
 from ..utils.load_model import load_param
 
@@ -22,7 +22,7 @@ def test_rcnn_dff(network, dataset, image_set, root_path, dataset_path,
 
     # load symbol and testing data
     if has_rpn:
-        sym = eval('get_' + network + '_test_dff')(num_classes=config.NUM_CLASSES, num_anchors=config.NUM_ANCHORS)
+        sym = eval('get_' + network + '_test_ffa')(num_classes=config.NUM_CLASSES, num_anchors=config.NUM_ANCHORS)
         imdb = eval(dataset)(image_set, root_path, dataset_path)
         roidb = imdb.gt_roidb()
     else:
@@ -32,7 +32,7 @@ def test_rcnn_dff(network, dataset, image_set, root_path, dataset_path,
         roidb = eval('imdb.' + proposal + '_roidb')(gt_roidb)
 
     # get test data iter
-    test_data = TestLoader(roidb, batch_size=1, shuffle=shuffle, has_rpn=has_rpn)
+    test_data = TestLoaderFFA(roidb, batch_size=1, shuffle=shuffle, has_rpn=has_rpn)
 
     # load model
     arg_params, aux_params = load_param(prefix, epoch, convert=True, ctx=ctx, process=True)

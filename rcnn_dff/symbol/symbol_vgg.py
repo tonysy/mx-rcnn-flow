@@ -1521,3 +1521,110 @@ def get_vgg_train_ffa(num_classes=config.NUM_CLASSES, num_anchors=config.NUM_ANC
 
     group = mx.symbol.Group(rpn_group + rcnn_group)
     return group
+
+def get_vgg_test_ffa(num_classes=config.NUM_CLASSES, num_anchors=config.NUM_ANCHORS):
+    """
+    Faster R-CNN test with VGG 16 conv layers
+    :param num_classes: used to determine output size
+    :param num_anchors: used to determine output size
+    :return: Symbol
+    """
+    param_variable_list = [mx.sym.Variable(item) for item in config.SHARE_PARAMS_LIST]
+    param_dic = dict(zip(config.SHARE_PARAMS_LIST, param_variable_list))
+
+    data_dict = {}
+    for i in range(config.FRAMES_FEATURE_AGGREGATION):
+        data_dict['prev_{}'.format(i+1)] = mx.symbol.Variable(name='prev_{}'.format(i+1))
+        data_dict['next_{}'.format(i+1)] = mx.symbol.Variable(name='next_{}'.format(i+1))
+    data_dict['data'] = mx.symbol.Variable(name="data")
+    # data = data_dict['data']
+
+    im_info = mx.symbol.Variable(name="im_info")
+    gt_boxes = mx.symbol.Variable(name="gt_boxes")
+    rpn_label = mx.symbol.Variable(name='label')
+    rpn_bbox_target = mx.symbol.Variable(name='bbox_target')
+    rpn_bbox_weight = mx.symbol.Variable(name='bbox_weight')
+
+    # shared convolutional layers
+    # relu5_3 = get_vgg_conv(data)
+    relu5_3_ref = get_vgg_dilate_conv(data_dict['data'])
+    arg_shape, output_shape, aux_shape = relu5_3_ref.infer_shape(data=(1, 3, 384, 1280))
+    print 'aaaaaa relu5_3_ref:',arg_shape, output_shape, aux_shape
+
+    relu5_3_dict = {}
+
+    for item in data_dict.keys():
+        # print "#####", data_dict[item].list_arguments()
+        # feature_propagate_share(param_dic, src_feature, data2, data)
+        relu5_3_dict[item], flow, flow_avg = feature_propagate_share(item, param_dic, relu5_3_ref, data_dict[item], data_dict['data'])
+        # print "~~~~~~", relu5_3_dict[item].list_arguments()
+    relu5_3_dict['data'] = relu5_3_ref
+    print "flow flow flow", relu5_3_dict['prev_1'].list_arguments()
+    relu5_3 = get_feature_aggregation(relu5_3_dict)
+    print "arguments", relu5_3.list_arguments()
+
+    # RPN
+    rpn_conv = mx.symbol.Convolution(
+        data=relu5_3, kernel=(3, 3), pad=(1, 1), num_filter=512, name="rpn_conv_3x3")
+    rpn_relu = mx.symbol.Activation(data=rpn_conv, act_type="relu", name="rpn_relu")
+    rpn_cls_score = mx.symbol.Convolution(
+        data=rpn_relu, kernel=(1, 1), pad=(0, 0), num_filter=2 * num_anchors, name="rpn_cls_score")
+    rpn_bbox_pred = mx.symbol.Convolution(
+        data=rpn_relu, kernel=(1, 1), pad=(0, 0), num_filter=4 * num_anchors, name="rpn_bbox_pred")
+
+    # ROI Proposal
+    rpn_cls_score_reshape = mx.symbol.Reshape(
+        data=rpn_cls_score, shape=(0, 2, -1, 0), name="rpn_cls_score_reshape")
+    rpn_cls_prob = mx.symbol.SoftmaxActivation(
+        data=rpn_cls_score_reshape, mode="channel", name="rpn_cls_prob")
+    rpn_cls_prob_reshape = mx.symbol.Reshape(
+        data=rpn_cls_prob, shape=(0, 2 * num_anchors, -1, 0), name='rpn_cls_prob_reshape')
+    if config.TEST.CXX_PROPOSAL:
+        rois = mx.symbol.Proposal(
+            cls_prob=rpn_cls_prob_reshape, bbox_pred=rpn_bbox_pred, im_info=im_info, name='rois',
+            feature_stride=config.RPN_FEAT_STRIDE, scales=tuple(config.ANCHOR_SCALES), ratios=tuple(config.ANCHOR_RATIOS),
+            rpn_pre_nms_top_n=config.TEST.RPN_PRE_NMS_TOP_N, rpn_post_nms_top_n=config.TEST.RPN_POST_NMS_TOP_N,
+            threshold=config.TEST.RPN_NMS_THRESH, rpn_min_size=config.TEST.RPN_MIN_SIZE, iou_loss=config.RPN_IOU_LOSS)
+    else:
+        rois = mx.symbol.Custom(
+            cls_prob=rpn_cls_prob_reshape, bbox_pred=rpn_bbox_pred, im_info=im_info, name='rois',
+            op_type='proposal', feat_stride=config.RPN_FEAT_STRIDE,
+            scales=tuple(config.ANCHOR_SCALES), ratios=tuple(config.ANCHOR_RATIOS),
+            rpn_pre_nms_top_n=config.TEST.RPN_PRE_NMS_TOP_N, rpn_post_nms_top_n=config.TEST.RPN_POST_NMS_TOP_N,
+            threshold=config.TEST.RPN_NMS_THRESH, rpn_min_size=config.TEST.RPN_MIN_SIZE, iou_loss=config.RPN_IOU_LOSS)
+
+    # Fast R-CNN
+    roi_pool = mx.symbol.ROIPooling(
+        name='roi_pool', data=relu5_3, rois=rois, pooled_size=(7, 7), spatial_scale=1.0 / config.RCNN_FEAT_STRIDE)
+    if config.RCNN_CTX_WINDOW:
+        roi_pool_ctx = mx.symbol.ROIPooling(
+            name='roi_pool_ctx', data=relu5_3, rois=rois, pooled_size=(7, 7),
+            spatial_scale=1.0 / config.RCNN_FEAT_STRIDE, pad=0.25)
+        roi_pool_concat = mx.symbol.Concat(roi_pool, roi_pool_ctx, name='roi_pool_concat')
+        roi_pool_red = mx.symbol.Convolution(
+            data=roi_pool_concat, num_filter=512, kernel=(1, 1), stride=(1, 1), name='roi_pool_ctx_red')
+        roi_pool = mx.symbol.Activation(data=roi_pool_red, act_type='relu', name='roi_pool_relu')
+
+    # group 6
+    flatten = mx.symbol.Flatten(data=roi_pool, name="flatten")
+    fc6 = mx.symbol.FullyConnected(data=flatten, num_hidden=4096, name="fc6")
+    relu6 = mx.symbol.Activation(data=fc6, act_type="relu", name="relu6")
+    drop6 = mx.symbol.Dropout(data=relu6, p=0.5, name="drop6")
+    # group 7
+    fc7 = mx.symbol.FullyConnected(data=drop6, num_hidden=4096, name="fc7")
+    relu7 = mx.symbol.Activation(data=fc7, act_type="relu", name="relu7")
+    drop7 = mx.symbol.Dropout(data=relu7, p=0.5, name="drop7")
+    # classification
+    cls_score = mx.symbol.FullyConnected(name='cls_score', data=drop7, num_hidden=num_classes)
+    cls_prob = mx.symbol.SoftmaxOutput(name='cls_prob', data=cls_score)
+    # bounding box regression
+    bbox_pred = mx.symbol.FullyConnected(name='bbox_pred', data=drop7, num_hidden=num_classes * 4)
+
+    # reshape output
+    cls_prob = mx.symbol.Reshape(data=cls_prob, shape=(config.TEST.BATCH_IMAGES, -1, num_classes), name='cls_prob_reshape')
+    bbox_pred = mx.symbol.Reshape(data=bbox_pred, shape=(config.TEST.BATCH_IMAGES, -1, 4 * num_classes), name='bbox_pred_reshape')
+
+    # group output
+    # group = mx.symbol.Group([rois, cls_prob, bbox_pred])
+    group = mx.symbol.Group([rois, cls_prob, bbox_pred, flow, flow_avg])
+    return group

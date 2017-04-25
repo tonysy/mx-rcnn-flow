@@ -88,6 +88,89 @@ class TestLoader(mx.io.DataIter):
         self.im_info = im_info
 
 
+class TestLoaderFFA(mx.io.DataIter):
+    def __init__(self, roidb, batch_size=1, shuffle=False,
+                 has_rpn=False):
+        super(TestLoaderFFA, self).__init__()
+
+        # save parameters as properties
+        self.roidb = roidb
+        self.batch_size = batch_size
+        self.shuffle = shuffle
+        self.has_rpn = has_rpn
+
+        # infer properties from roidb
+        self.size = len(self.roidb)
+        self.index = np.arange(self.size)
+
+        # decide data and label names (only for training)
+        if has_rpn:
+            self.data_name = ['data', 'im_info']
+            for i in range(config.FRAMES_FEATURE_AGGREGATION):
+                self.data_name.append('prev_{}'.format(i+1))
+                self.data_name.append('next_{}'.format(i+1))
+        else:
+            self.data_name = ['data', 'rois']
+        self.label_name = None
+
+        # status variable for synchronization between get_data and get_label
+        self.cur = 0
+        self.data = None
+        self.label = None
+        self.im_info = None
+
+        # get first batch to fill in provide_data and provide_label
+        self.reset()
+        self.get_batch()
+
+    @property
+    def provide_data(self):
+        return [(k, v.shape) for k, v in zip(self.data_name, self.data)]
+
+    @property
+    def provide_label(self):
+        return None
+
+    def reset(self):
+        self.cur = 0
+        if self.shuffle:
+            np.random.shuffle(self.index)
+
+    def iter_next(self):
+        return self.cur + self.batch_size <= self.size
+
+    def next(self):
+        if self.iter_next():
+            self.get_batch()
+            self.cur += self.batch_size
+            return self.im_info, \
+                   mx.io.DataBatch(data=self.data, label=self.label,
+                                   pad=self.getpad(), index=self.getindex(),
+                                   provide_data=self.provide_data, provide_label=self.provide_label)
+        else:
+            raise StopIteration
+
+    def getindex(self):
+        return self.cur / self.batch_size
+
+    def getpad(self):
+        if self.cur + self.batch_size > self.size:
+            return self.cur + self.batch_size - self.size
+        else:
+            return 0
+
+    def get_batch(self):
+        cur_from = self.cur
+        cur_to = min(cur_from + self.batch_size, self.size)
+        roidb = [self.roidb[self.index[i]] for i in range(cur_from, cur_to)]
+        if self.has_rpn:
+            data, label, im_info = get_rpn_testbatch_ffa(roidb)
+        else:
+            data, label, im_info = get_rcnn_testbatch_ffa(roidb)
+        self.data = [mx.nd.array(data[name]) for name in self.data_name]
+        self.im_info = im_info
+
+
 class ROIIter(mx.io.DataIter):
     def __init__(self, roidb, batch_size=2, shuffle=False, ctx=None, work_load_list=None, aspect_grouping=False):
         """
@@ -509,13 +592,13 @@ class AnchorLoaderFFA(mx.io.DataIter):
             max_data_shape = []
         if max_label_shape is None:
             max_label_shape = []
-        print "max data shape:", max_data_shape
-        print "max label shape:", max_label_shape
+        # print "max data shape:", max_data_shape
+        # print "max label shape:", max_label_shape
         max_shapes = dict(max_data_shape + max_label_shape)
-        print "max shapes:", max_shapes
+        # print "max shapes:", max_shapes
         input_batch_size = max_shapes['data'][0]
         im_info = [[max_shapes['data'][2], max_shapes['data'][3], 1.0]]
-        print im_info
+        # print im_info
         # print **max_shapes
         _, feat_shape, _ = self.feat_sym.infer_shape(**max_shapes)
         label = assign_anchor(feat_shape[0], np.zeros((0, 5)), im_info,
