@@ -102,7 +102,39 @@ car 	| 0.872972	| 0.751366636364 | 	0.602904090909
 pedestrian 	| 0.583609090909 | 	0.501473727273 | 	0.420809636364
 cyclist 	| 0.574077454545	| 0.393106181818	| 0.334247727273
 
+### 6. RCNN-FFA(RCNN-Flow-Feature-Aggregation)
+#### RCNN-Train:
+- K = 2
 
+```
+Prev_2 ---- Prev_1 ---- Curr_Image ---- Next_1 ---- Next_2
+
+```
+#### Results
+- K = 2, epoch = 10
+
+kitti	| easy	| medium	| hard
+:---: | :---: | :----: | :---:
+car  |	0.865556363636 |	0.675827363636 |	0.587821727273
+pedestrian | 	0.602180909091 |	0.513320181818 |	0.430714636364
+cyclist | 	0.553921363636 |	0.377344090909	 | 0.325980272727
+
+
+- K = 3
+
+kitti	| easy	| medium	| hard
+:---: | :---: | :----: | :---:
+car 	| 	|	|
+pedestrian 	| 	|	|
+cyclist 	|	|	|
+
+- K = 4
+
+kitti	| easy	| medium	| hard
+:---: | :---: | :----: | :---:
+car 	|	|	|
+pedestrian 		|	|	|
+cyclist 	|	|	|
 ## References
 1. Shaoqing Ren, Kaiming He, Ross Girshick, and Jian Sun. "Faster R-CNN: Towards real-time object detection with region proposal networks." In Advances in Neural Information Processing Systems, 2015.
 2. Karen Simonyan, and Andrew Zisserman. "Very deep convolutional networks for large-scale image recognition." arXiv preprint arXiv:1409.1556 (2014).
