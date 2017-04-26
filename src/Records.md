@@ -132,9 +132,10 @@ cyclist   |		0.537169181818  |		0.322616454545  |		0.314224
 
 kitti	| easy	| medium	| hard
 :---: | :---: | :----: | :---:
-car 	|	|	|
-pedestrian 		|	|	|
-cyclist 	|	|	|
+car 	  |	0.834104636364	  |	0.653766818182  |		0.564943
+pedestrian 	  |	0.525435727273  |		0.438181090909  |		0.430116727273
+cyclist   |		0.484703  |		0.315549818182	  |	0.313029727273
+
 ## References
 1. Shaoqing Ren, Kaiming He, Ross Girshick, and Jian Sun. "Faster R-CNN: Towards real-time object detection with region proposal networks." In Advances in Neural Information Processing Systems, 2015.
 2. Karen Simonyan, and Andrew Zisserman. "Very deep convolutional networks for large-scale image recognition." arXiv preprint arXiv:1409.1556 (2014).

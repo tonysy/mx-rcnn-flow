@@ -1237,7 +1237,7 @@ def get_vgg_train_dff_cycle(num_classes=config.NUM_CLASSES, num_anchors=config.N
     group = mx.symbol.Group(rpn_group + rcnn_group)
     return group
 
-def get_embedding_weight(feature_input,embedding_param_dic):
+def get_embedding_feature(feature_input,embedding_param_dic):
     embedding_conv1 = mx.symbol.Convolution(data=feature_input, kernel=(1, 1), \
                         pad=(0, 0), num_filter=512, name="embedding_conv1",\
                         weight=embedding_param_dic['embedding_conv1_weight'],\
@@ -1255,23 +1255,23 @@ def get_embedding_weight(feature_input,embedding_param_dic):
     return embedding_flatten
 
 def get_feature_aggregation(relu5_3_dict):
-    embedding_param_variable_list = [mx.sym.Variable(item) for item in config.EMBEDDING_PARAMS_LIST]
-    embedding_param_dic = dict(zip(config.EMBEDDING_PARAMS_LIST, embedding_param_variable_list))
-
+        """
+        Flow Feature Aggregation use weight from similarity measurement.
+        :param relu5_3_dict: nearby feature from flow warp
+        :return: Symbol
+        """
+    embedding_param_variable_list = [mx.sym.Variable(item) \
+                                     for item in config.EMBEDDING_PARAMS_LIST]
+    embedding_param_dic = dict(zip(config.EMBEDDING_PARAMS_LIST, \
+                                   embedding_param_variable_list))
     embedding_dict = {}
     for item in relu5_3_dict.keys():
-        embedding_dict[item] = get_embedding_weight(relu5_3_dict[item],embedding_param_dic)
-
+        embedding_dict[item] = get_embedding_feature(relu5_3_dict[item],embedding_param_dic)
     ref_feature = embedding_dict['data']
-    # arg_shape, output_shape, aux_shape = ref_feature.infer_shape(data=(1, 3, 384, 1280))
-    # print '####ref_feature:',arg_shape, output_shape, aux_shape
-    #
+
+    # l2 distance of ref_feature  (name = 'data')
     ref_length_sqr = mx.symbol.dot(ref_feature ,mx.symbol.Reshape(ref_feature, shape=(-1,)))
     ref_length = mx.symbol.sqrt(ref_length_sqr)
-
-    # arg_shape, output_shape, aux_shape = ref_length.infer_shape(data=(1, 3, 384, 1280))
-    # print '####ref_l2norm:',arg_shape, output_shape, aux_shape
-
 
     score_dict = {}
     dot_product_dict = {}
@@ -1281,58 +1281,28 @@ def get_feature_aggregation(relu5_3_dict):
         dot_product = mx.symbol.dot(curr_feature, mx.symbol.Reshape(ref_feature,\
                                                                     shape=(-1,)), \
                                     name='dot_product_{}'.format(item))
-        dot_product_dict[item] = dot_product
+        dot_product = mx.symbol.Reshape(dot_product, shape=(1,))
 
+        # l2 distance of curr_feature  (name = item, e.g. 'prev_1, next_1')
         curr_length_sqr = mx.symbol.dot(curr_feature ,mx.symbol.Reshape(curr_feature, shape=(-1,)))
         curr_length = mx.symbol.sqrt(curr_length_sqr)
 
-        # l2_product = mx.symbol.Reshape(curr_lengh * ref_length, shape=(1,1))
         l2_product = curr_length * ref_length
+        l2_product = mx.symbol.Reshape(l2_product, shape=(1,))
 
-        l2_product_dict[item] = l2_product
+        score_dict[item] = mx.symbol.exp( dot_product / l2_product , name='score_{}'.format(item))
 
-        score_dict[item] = mx.symbol.exp(mx.symbol.Reshape(dot_product, shape=(1,))  / mx.symbol.Reshape(l2_product, shape=(1,)), name='score_{}'.format(item))
-
-    # arg_shape, output_shape, aux_shape = dot_product_dict['data'].infer_shape(data=(1, 3, 384, 1280))
-    # print '$$$$$dot_product:',arg_shape, output_shape, aux_shape
-    # arg_shape, output_shape, aux_shape = l2_product_dict['data'].infer_shape(data=(1, 3, 384, 1280))
-    # print '$$$$$l2_product:',arg_shape, output_shape, aux_shape
-    #
-    # arg_shape, output_shape, aux_shape = score_dict['data'].infer_shape(data=(1, 3, 384, 1280))
-    # print '$$$$$score_dict:',arg_shape, output_shape, aux_shape
-
+    # calculate the weight of every feature
     weight_dict = {}
-
     weight_sum = score_dict['data']
-    # print weight_sum.list_outputs()
-    # print weight_sum.list_arguments()
-    # arg_shape, output_shape, aux_shape = weight_sum.infer_shape(data=(1, 3, 384, 1280))
-    # print '$$$$$weight_sum:',arg_shape, output_shape, aux_shape
-
     for item in score_dict.keys():
         if item != 'data':
             weight_sum += score_dict[item]
-    print weight_sum.list_outputs()
-    print weight_sum.list_arguments()
-
-
-
-    # arg_shape, output_shape, aux_shape = weight_sum.infer_shape(data=(1, 3, 384, 1280),prev_1=(1, 3, 384, 1280),prev_2=(1, 3, 384, 1280),next_1=(1, 3, 384, 1280),next_2=(1, 3, 384, 1280))
-    # print '$$$$$weight_sum new:',arg_shape, output_shape, aux_shape
-
     for item in score_dict.keys():
         weight_dict[item] = score_dict[item] / weight_sum
 
-    # arg_shape, output_shape, aux_shape = weight_dict['data'].infer_shape(data=(1, 3, 384, 1280),prev_1=(1, 3, 384, 1280),prev_2=(1, 3, 384, 1280),next_1=(1, 3, 384, 1280),next_2=(1, 3, 384, 1280))
-    # print '$$$$$weight_product:',arg_shape, output_shape, aux_shape
-
-
     relu5_3 = relu5_3_dict['data']
-    # arg_shape, output_shape, aux_shape = relu5_3.infer_shape(data=(1, 3, 384, 1280))
-    # print '$$$$$:',arg_shape, output_shape, aux_shape
-    # print 'relu5_3', relu5_3
     for item in weight_dict.keys():
-        # print 'item', item
         relu5_3_temp = mx.symbol.broadcast_mul(lhs=relu5_3_dict[item], rhs=weight_dict[item])
         relu5_3 += relu5_3_temp
     relu5_3 -= relu5_3_dict['data']
@@ -1348,15 +1318,16 @@ def get_vgg_train_ffa(num_classes=config.NUM_CLASSES, num_anchors=config.NUM_ANC
     :param num_anchors: used to determine output size
     :return: Symbol
     """
+    # flow share param
     param_variable_list = [mx.sym.Variable(item) for item in config.SHARE_PARAMS_LIST]
     param_dic = dict(zip(config.SHARE_PARAMS_LIST, param_variable_list))
 
+    # create data dict to store curr image and nearby image
     data_dict = {}
     for i in range(config.FRAMES_FEATURE_AGGREGATION):
         data_dict['prev_{}'.format(i+1)] = mx.symbol.Variable(name='prev_{}'.format(i+1))
         data_dict['next_{}'.format(i+1)] = mx.symbol.Variable(name='next_{}'.format(i+1))
     data_dict['data'] = mx.symbol.Variable(name="data")
-    # data = data_dict['data']
 
     im_info = mx.symbol.Variable(name="im_info")
     gt_boxes = mx.symbol.Variable(name="gt_boxes")
@@ -1364,25 +1335,21 @@ def get_vgg_train_ffa(num_classes=config.NUM_CLASSES, num_anchors=config.NUM_ANC
     rpn_bbox_target = mx.symbol.Variable(name='bbox_target')
     rpn_bbox_weight = mx.symbol.Variable(name='bbox_weight')
 
-    # shared convolutional layers
-    # relu5_3 = get_vgg_conv(data)
+    # direct feature from rcnn (relu5_3 reference)
     relu5_3_ref = get_vgg_dilate_conv(data_dict['data'])
-    arg_shape, output_shape, aux_shape = relu5_3_ref.infer_shape(data=(1, 3, 384, 1280))
-    print 'aaaaaa relu5_3_ref:',arg_shape, output_shape, aux_shape
 
+    # create feature dict to store ref feature and nearby features
     relu5_3_dict = {}
-
     for item in data_dict.keys():
-        # print "#####", data_dict[item].list_arguments()
-        # feature_propagate_share(param_dic, src_feature, data2, data)
-        relu5_3_dict[item], _, _ = feature_propagate_share(item, param_dic, relu5_3_ref, data_dict[item], data_dict['data'])
-        # print "~~~~~~", relu5_3_dict[item].list_arguments()
+        # use flow to get feature
+        relu5_3_dict[item], _, _ = feature_propagate_share(item, param_dic, \
+                                                           relu5_3_ref, \
+                                                           data_dict[item],\
+                                                           data_dict['data'])
     relu5_3_dict['data'] = relu5_3_ref
-    print "flow flow flow", relu5_3_dict['prev_1'].list_arguments()
+
+    # feature aggregation use neary features
     relu5_3 = get_feature_aggregation(relu5_3_dict)
-    print "arguments", relu5_3.list_arguments()
-    # relu5_3_list = relu5_3_dict.values()
-    # relu5_3 = sum(relu5_3_list) + relu5_3_ref
 
     # RPN layers
     rpn_conv = mx.symbol.Convolution(
