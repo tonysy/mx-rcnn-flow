@@ -1255,15 +1255,14 @@ def get_embedding_feature(feature_input,embedding_param_dic):
     return embedding_flatten
 
 def get_feature_aggregation(relu5_3_dict):
-        """
-        Flow Feature Aggregation use weight from similarity measurement.
-        :param relu5_3_dict: nearby feature from flow warp
-        :return: Symbol
-        """
-    embedding_param_variable_list = [mx.sym.Variable(item) \
-                                     for item in config.EMBEDDING_PARAMS_LIST]
-    embedding_param_dic = dict(zip(config.EMBEDDING_PARAMS_LIST, \
-                                   embedding_param_variable_list))
+
+    """
+    Flow Feature Aggregation use weight from similarity measurement.
+    :param relu5_3_dict: nearby feature from flow warp
+    :return: Symbol
+    """
+    embedding_param_variable_list = [mx.sym.Variable(item) for item in config.EMBEDDING_PARAMS_LIST ]
+    embedding_param_dic = dict(zip(config.EMBEDDING_PARAMS_LIST, embedding_param_variable_list))
     embedding_dict = {}
     for item in relu5_3_dict.keys():
         embedding_dict[item] = get_embedding_feature(relu5_3_dict[item],embedding_param_dic)
@@ -1526,9 +1525,11 @@ def get_vgg_test_ffa(num_classes=config.NUM_CLASSES, num_anchors=config.NUM_ANCH
         relu5_3_dict[item], flow, flow_avg = feature_propagate_share(item, param_dic, relu5_3_ref, data_dict[item], data_dict['data'])
         # print "~~~~~~", relu5_3_dict[item].list_arguments()
     relu5_3_dict['data'] = relu5_3_ref
-    print "flow flow flow", relu5_3_dict['prev_1'].list_arguments()
+    # print "flow flow flow", relu5_3_dict['prev_1'].list_arguments()
     relu5_3 = get_feature_aggregation(relu5_3_dict)
-    print "arguments", relu5_3.list_arguments()
+
+
+
 
     # RPN
     rpn_conv = mx.symbol.Convolution(
@@ -1592,6 +1593,6 @@ def get_vgg_test_ffa(num_classes=config.NUM_CLASSES, num_anchors=config.NUM_ANCH
     bbox_pred = mx.symbol.Reshape(data=bbox_pred, shape=(config.TEST.BATCH_IMAGES, -1, 4 * num_classes), name='bbox_pred_reshape')
 
     # group output
-    # group = mx.symbol.Group([rois, cls_prob, bbox_pred])
-    group = mx.symbol.Group([rois, cls_prob, bbox_pred, flow, flow_avg])
+    group = mx.symbol.Group([rois, cls_prob, bbox_pred])
+    # group = mx.symbol.Group([rois, cls_prob, bbox_pred, flow, flow_avg])
     return group

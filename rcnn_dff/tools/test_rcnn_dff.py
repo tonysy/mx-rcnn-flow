@@ -37,6 +37,15 @@ def test_rcnn_dff(network, dataset, image_set, root_path, dataset_path,
     # load model
     arg_params, aux_params = load_param(prefix, epoch, convert=True, ctx=ctx, process=True)
 
+    # # use pre-trained rcnn model
+    rcnn_model_path = '/data/syzhang/model/e2e-rcnn-log'
+    #
+    _, rcnn_arg_params, rcnn_aux_params = mx.model.load_checkpoint(rcnn_model_path, 10)
+    print rcnn_arg_params.keys()
+    # assert 1==2,'ss'
+    arg_params.update(rcnn_arg_params)
+    aux_params.update(rcnn_aux_params)
+
     # infer shape
     data_shape_dict = dict(test_data.provide_data)
     arg_shape, _, aux_shape = sym.infer_shape(**data_shape_dict)
