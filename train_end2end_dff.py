@@ -79,35 +79,29 @@ def train_net(args, ctx, pretrained, epoch, prefix, begin_epoch, end_epoch,
                               anchor_ratios=config.ANCHOR_RATIOS, aspect_grouping=config.TRAIN.ASPECT_GROUPING)
 
 
+
+    print '~~~~!!!@!@!@@', train_data.provide_data, train_data.provide_label
     print "========load data complete"
     # =====================
     # infer max shape
-    # if config.TRAIN.CROP == 'origin':
-    #     max_data_shape = [('data', (input_batch_size, 3, max([v[0] for v in config.SCALES]), max([v[1] for v in config.SCALES]))),('data2', (input_batch_size, 3, max([v[0] for v in config.SCALES]), max([v[1] for v in config.SCALES])))]
-    #
-    #     max_data_shape, max_label_shape = train_data.infer_shape(max_data_shape)
-    #     max_data_shape.append(('gt_boxes', (input_batch_size, 100, 5)))
-    #     print 'providing maximum shape', max_data_shape, max_label_shape
-    # else:
-    #     max_data_shape = [('gt_boxes', (input_batch_size, 100, 5))]
-    #     max_label_shape = None
     # ffa infer max shape
     if config.TRAIN.CROP == 'origin':
         max_data_shape_dict = {}
         for i in range(config.FRAMES_FEATURE_AGGREGATION):
             max_data_shape_dict['prev_{}'.format(i+1)] = (input_batch_size, 3, \
-                                                max([v[0] for v in config.SCALES]), \
-                                                max([v[1] for v in config.SCALES]))
+                                                max([v[0] for v in config.MAX_SHAPE_SCALES]), \
+                                                max([v[1] for v in config.MAX_SHAPE_SCALES]))
             max_data_shape_dict['next_{}'.format(i+1)] = (input_batch_size, 3, \
-                                                max([v[0] for v in config.SCALES]), \
-                                                max([v[1] for v in config.SCALES]))
+                                                max([v[0] for v in config.MAX_SHAPE_SCALES]), \
+                                                max([v[1] for v in config.MAX_SHAPE_SCALES]))
         max_data_shape_dict['data'] = (input_batch_size, 3, \
-                                            max([v[0] for v in config.SCALES]), \
-                                            max([v[1] for v in config.SCALES]))
+                                            max([v[0] for v in config.MAX_SHAPE_SCALES]), \
+                                            max([v[1] for v in config.MAX_SHAPE_SCALES]))
         max_data_shape = max_data_shape_dict.items()
         # max_data_shape = [('data', (input_batch_size, 3, max([v[0] for v in config.SCALES]), max([v[1] for v in config.SCALES]))),('data2', (input_batch_size, 3, max([v[0] for v in config.SCALES]), max([v[1] for v in config.SCALES])))]
 
         max_data_shape, max_label_shape = train_data.infer_shape(max_data_shape)
+        print max_data_shape, max_label_shape
         max_data_shape.append(('gt_boxes', (input_batch_size, 100, 5)))
         print 'providing maximum shape', max_data_shape, max_label_shape
     else:

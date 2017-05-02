@@ -33,7 +33,7 @@ def test_rcnn_dff(network, dataset, image_set, root_path, dataset_path,
 
     # get test data iter
     test_data = TestLoaderFFA(roidb, batch_size=1, shuffle=shuffle, has_rpn=has_rpn)
-
+    print '~~~~!!!@!@!@@', test_data.provide_data, test_data.provide_label
     # load model
     arg_params, aux_params = load_param(prefix, epoch, convert=True, ctx=ctx, process=True)
 

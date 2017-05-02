@@ -1269,6 +1269,7 @@ def get_feature_aggregation(relu5_3_dict):
     ref_feature = embedding_dict['data']
 
     # l2 distance of ref_feature  (name = 'data')
+
     ref_length_sqr = mx.symbol.dot(ref_feature ,mx.symbol.Reshape(ref_feature, shape=(-1,)))
     ref_length = mx.symbol.sqrt(ref_length_sqr)
 
@@ -1277,10 +1278,14 @@ def get_feature_aggregation(relu5_3_dict):
     l2_product_dict = {}
     for item in embedding_dict.keys():
         curr_feature = embedding_dict[item]
+
+        # mx.symbol.Reshape(ref_feature, shape=(-1,))
         dot_product = mx.symbol.dot(curr_feature, mx.symbol.Reshape(ref_feature,\
                                                                     shape=(-1,)), \
                                     name='dot_product_{}'.format(item))
+
         dot_product = mx.symbol.Reshape(dot_product, shape=(1,))
+        dot_product_dict[item] = dot_product
 
         # l2 distance of curr_feature  (name = item, e.g. 'prev_1, next_1')
         curr_length_sqr = mx.symbol.dot(curr_feature ,mx.symbol.Reshape(curr_feature, shape=(-1,)))
@@ -1291,6 +1296,8 @@ def get_feature_aggregation(relu5_3_dict):
 
         score_dict[item] = mx.symbol.exp( dot_product / l2_product , name='score_{}'.format(item))
 
+    arg_shape, output_shape, aux_shape = embedding_dict['data'].infer_shape(data=(2, 3, 384, 1280))
+    print '####dot_product:',arg_shape, output_shape, aux_shape
     # calculate the weight of every feature
     weight_dict = {}
     weight_sum = score_dict['data']
