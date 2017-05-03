@@ -18,6 +18,7 @@ config.FLOW_LOSS_SCALE = {'loss1': 1.00,
                           'loss6': 0.00}
 
 config.FRAMES_FEATURE_AGGREGATION = 2
+config.FIGURE_DIR = '/data/syzhang/rcnn_dff/figure/ffa-k3/'
 # network related params
 config.PIXEL_MEANS = np.array([103.939, 116.779, 123.68])
 config.IMAGE_STRIDE = 64

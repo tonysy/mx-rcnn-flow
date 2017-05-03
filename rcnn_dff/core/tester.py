@@ -130,7 +130,7 @@ def im_detect(predictor, data_batch, data_names, scale):
     return scores, pred_boxes, data_dict
 
 
-def pred_eval(predictor, test_data, imdb, vis=False, thresh=1e-3):
+def pred_eval(predictor, test_data, imdb, vis=False, thresh=1e-3, save=False):
     """
     wrapper for calculating offline validation for faster data analysis
     in this example, all threshold are set by hand
@@ -150,6 +150,7 @@ def pred_eval(predictor, test_data, imdb, vis=False, thresh=1e-3):
     max_per_image = -1
 
     num_images = imdb.num_images
+    # print imdb.image_set_index
     # all detections are collected into:
     #    all_boxes[cls][image] = N x 5 array of detections in
     #    (x1, y1, x2, y2, score)
@@ -161,7 +162,6 @@ def pred_eval(predictor, test_data, imdb, vis=False, thresh=1e-3):
     for im_info, data_batch in test_data:
         t1 = time.time() - t
         t = time.time()
-
         scale = im_info[0, 2]
         scores, boxes, data_dict = im_detect(predictor, data_batch, data_names, scale)
 
@@ -188,7 +188,10 @@ def pred_eval(predictor, test_data, imdb, vis=False, thresh=1e-3):
         if vis:
             boxes_this_image = [[]] + [all_boxes[j][i] for j in range(1, imdb.num_classes)]
             vis_all_detection(data_dict['data'].asnumpy(), boxes_this_image, imdb.classes, scale)
-
+        if save:
+            boxes_this_image = [[]] + [all_boxes[j][i] for j in range(1, imdb.num_classes)]
+            img_name = imdb.image_set_index[i]
+            save_all_detection(img_name, data_dict['data'].asnumpy(), boxes_this_image, imdb.classes, scale)
         t3 = time.time() - t
         t = time.time()
         print 'testing {}/{} data {:.4f}s net {:.4f}s post {:.4f}s'.format(i, imdb.num_images, t1, t2, t3)
@@ -231,6 +234,41 @@ def vis_all_detection(im_array, detections, class_names, scale):
                            '{:s} {:.3f}'.format(name, score),
                            bbox=dict(facecolor=color, alpha=0.5), fontsize=12, color='white')
     plt.show()
+
+def save_all_detection(img_name, im_array, detections, class_names, scale):
+    """
+    visualize all detections in one image
+    :param im_array: [b=1 c h w] in rgb
+    :param detections: [ numpy.ndarray([[x1 y1 x2 y2 score]]) for j in classes ]
+    :param class_names: list of names in imdb
+    :param scale: visualize the scaled image
+    :return:
+    """
+    import matplotlib.pyplot as plt
+    import random
+    im = image.transform_inverse(im_array, config.PIXEL_MEANS)
+    plt.figure(figsize=(12.42,3.76))
+    plt.imshow(im)
+    for j, name in enumerate(class_names):
+        if name == '__background__':
+            continue
+        color = (random.random(), random.random(), random.random())  # generate a random color
+        dets = detections[j]
+        for det in dets:
+            bbox = det[:4] * scale
+            score = det[-1]
+            rect = plt.Rectangle((bbox[0], bbox[1]),
+                                 bbox[2] - bbox[0],
+                                 bbox[3] - bbox[1], fill=False,
+                                 edgecolor=color, linewidth=3.5)
+            plt.gca().add_patch(rect)
+            plt.gca().text(bbox[0], bbox[1] - 2,
+                           '{:s} {:.3f}'.format(name, score),
+                           bbox=dict(facecolor=color, alpha=0.5), fontsize=12, color='white')
+    fig_path = os.path.join(config.FIGURE_DIR, img_name.replace('.jpg', '.png'))
+    plt.savefig(fig_path,dpi=100)
+    plt.close()
+    # plt.show()
 
 
 def draw_all_detection(im_array, detections, class_names, scale):

@@ -33,18 +33,17 @@ def test_rcnn_dff(network, dataset, image_set, root_path, dataset_path,
 
     # get test data iter
     test_data = TestLoaderFFA(roidb, batch_size=1, shuffle=shuffle, has_rpn=has_rpn)
-    print '~~~~!!!@!@!@@', test_data.provide_data, test_data.provide_label
     # load model
     arg_params, aux_params = load_param(prefix, epoch, convert=True, ctx=ctx, process=True)
 
-    # # use pre-trained rcnn model
-    rcnn_model_path = '/data/syzhang/model/e2e-rcnn-log'
-    #
-    _, rcnn_arg_params, rcnn_aux_params = mx.model.load_checkpoint(rcnn_model_path, 10)
-    print rcnn_arg_params.keys()
-    # assert 1==2,'ss'
-    arg_params.update(rcnn_arg_params)
-    aux_params.update(rcnn_aux_params)
+    # # # use pre-trained rcnn model
+    # rcnn_model_path = '/data/syzhang/model/e2e-rcnn-log'
+    # #
+    # _, rcnn_arg_params, rcnn_aux_params = mx.model.load_checkpoint(rcnn_model_path, 10)
+    # print rcnn_arg_params.keys()
+    # # assert 1==2,'ss'
+    # arg_params.update(rcnn_arg_params)
+    # aux_params.update(rcnn_aux_params)
 
     # infer shape
     data_shape_dict = dict(test_data.provide_data)
@@ -67,7 +66,7 @@ def test_rcnn_dff(network, dataset, image_set, root_path, dataset_path,
     # decide maximum shape
     data_names = [k[0] for k in test_data.provide_data]
     label_names = ['cls_prob_label']
-    max_data_shape = [('data', (1, 3, max([v[0] for v in config.SCALES]), max([v[1] for v in config.SCALES])))]
+    max_data_shape = [('data', (1, 3, max([v[0] for v in config.MAX_SHAPE_SCALES]), max([v[1] for v in config.MAX_SHAPE_SCALES])))]
     if not has_rpn:
         max_data_shape.append(('rois', (1, config.TEST.PROPOSAL_POST_NMS_TOP_N + 30, 5)))
 
@@ -78,7 +77,7 @@ def test_rcnn_dff(network, dataset, image_set, root_path, dataset_path,
                           arg_params=arg_params, aux_params=aux_params)
 
     # start detection
-    pred_eval(predictor, test_data, imdb, vis=vis, thresh=thresh)
+    pred_eval(predictor, test_data, imdb, vis=vis, thresh=thresh, save=True)
 
 
 def parse_args():

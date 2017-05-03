@@ -143,6 +143,48 @@ car 	| 0.750215181818		| 0.566817727273	| 	0.490937727273
 pedestrian	|  	0.582343363636	| 	0.496310545455		| 0.418782909091
 cyclist 	| 	0.443371090909		| 0.287288636364		| 0.285888181818
 
+### 7. Finetuning RCNN-FFA(RCNN-Flow-Feature-Aggregation)
+#### RCNN-Train:
+- K = 2
+
+```
+Prev_2 ---- Prev_1 ---- Curr_Image ---- Next_1 ---- Next_2
+
+```
+#### Results
+
+- K = 2, epoch = 13
+
+kitti	| easy	| medium	| hard
+:---: | :---: | :----: | :---:
+car 		| 0.855991181818	| 	0.738014272727	| 	0.594305818182
+pedestrian 	| 	0.666225		| 0.514981181818	| 	0.500245818182
+cyclist 	| 	0.547969818182	| 	0.380394090909		| 0.376979909091
+
+
+- K = 2, epoch = 9
+
+kitti	| easy	| medium	| hard
+:---: | :---: | :----: | :---:
+car 	| 	0.858739		| 0.739924181818	| 	0.595705727273
+pedestrian 	| 	0.604128		| 0.516442272727		| 0.433520636364
+cyclist 	| 	0.562308272727	| 	0.391800727273		| 0.387928909091
+
+- K = 1, epoch = 9
+
+kitti	| easy	| medium	| hard
+:---: | :---: | :----: | :---:
+car 	0.849432545455	0.672744	0.584540090909
+pedestrian 	0.595081363636	0.506044818182	0.425798818182
+cyclist 	0.546834	0.383819818182	0.378918545455
+
+- K = 3, epoch = 9
+
+kitti	| easy	| medium	| hard
+:---: | :---: | :----: | :---:
+car 	| 	0.860044545455		| 0.681292363636		| 0.592367727273
+pedestrian 	| 	0.599431181818	| 	0.512895363636	| 	0.430536818182
+cyclist 	| 	0.560635	| 	0.393211818182	| 	0.39093
 
 ## References
 1. Shaoqing Ren, Kaiming He, Ross Girshick, and Jian Sun. "Faster R-CNN: Towards real-time object detection with region proposal networks." In Advances in Neural Information Processing Systems, 2015.
